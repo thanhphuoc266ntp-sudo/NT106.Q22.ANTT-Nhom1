@@ -1,7 +1,7 @@
 # NT106.Q22.ANTT - Nhóm 1
 
-## 💻 Đồ án Lập trình mạng cơ bản /n
-Ứng dụng điều khiển máy tính từ xa qua mạng nội bộ
+## 💻 Đồ án Lập trình mạng cơ bản
+**Ứng dụng điều khiển máy tính từ xa qua mạng nội bộ**
 
 ## 👥 Thành viên thực hiện
 
