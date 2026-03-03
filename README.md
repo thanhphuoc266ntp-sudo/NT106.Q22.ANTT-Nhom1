@@ -3,14 +3,11 @@
 ## 📌 Đồ án Lập trình mạng cơ bản
 **Ứng dụng điều khiển máy tính từ xa qua mạng nội bộ**
 
----
-
 ## 👥 Thành viên thực hiện
 
 - **Nguyễn Thành Phước** - 24521410  
 - **Nguyễn Kế Trực** - 24521869  
 
----
 ## 📋 Chức năng chính
 - Đăng ký, đăng nhập, đăng xuất và quản lý mật khẩu người dùng
 - Thiết lập kết nối giữa các máy tính trong cùng mạng nội bộ
