@@ -17,3 +17,5 @@
 - Điều khiển chuột và bàn phím theo thời gian thực
 - Quản lý trạng thái kết nối và xử lý ngắt kết nối
 - Ghi nhận và hiển thị lịch sử các phiên điều khiển
+- Truyền tệp tin (File Transfer) hai chiều
+- Wake-on-LAN (Khởi động máy tính từ xa)
