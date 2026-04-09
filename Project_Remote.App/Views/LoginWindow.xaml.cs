@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using MySqlConnector;
-using BCrypt.Net; // Bắt buộc cho InfoSec
+using BCrypt.Net; 
 using RemoteMate.Services;
 
 namespace RemoteMate
@@ -15,24 +15,23 @@ namespace RemoteMate
             InitializeComponent();
         }
 
-        // Xử lý ẩn/hiện chữ mờ ô Username (Giữ nguyên của Phước)
         private void txtUsername_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (placeholderUser == null) return;
             placeholderUser.Visibility = string.IsNullOrEmpty(txtUsername.Text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // Xử lý ẩn/hiện chữ mờ ô Password (Giữ nguyên của Phước)
+       
         private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (placeholderPass == null) return;
             placeholderPass.Visibility = string.IsNullOrEmpty(txtPassword.Password) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // HÀM QUAN TRỌNG: XỬ LÝ ĐĂNG NHẬP
+       
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Lấy thông tin nhập vào
+            
             string username = txtUsername.Text;
             string password = txtPassword.Password;
 
@@ -44,14 +43,13 @@ namespace RemoteMate
 
             try
             {
-                // 2. Mở kết nối Database lên Clever Cloud
+                
                 DatabaseService dbService = new DatabaseService();
                 using (var connection = dbService.GetConnection())
                 {
                     connection.Open();
 
-                    // 3. Truy vấn tìm Hash Password dựa vào Username
-                    // Giả sử bảng của Phước tên là 'Users', nếu khác thì đổi lại nhé
+                    
                     string query = "SELECT Password FROM Users WHERE Username = @user";
 
                     using (var cmd = new MySqlCommand(query, connection))
@@ -59,21 +57,21 @@ namespace RemoteMate
                         cmd.Parameters.AddWithValue("@user", username);
                         var result = cmd.ExecuteScalar();
 
-                        if (result != null) // Nếu tìm thấy user
+                        if (result != null) 
                         {
                             string storedHash = result.ToString();
 
-                            // 4. BẢO MẬT INFOSEC: Kiểm tra chữ thô với mã băm
+                           
                             bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(password, storedHash);
 
                             if (isPasswordCorrect)
                             {
                                 MessageBox.Show("Đăng nhập thành công!", "Thành công");
 
-                                // 5. Vào thẳng Dashboard (MainWindow)
+                                
                                 MainWindow main = new MainWindow();
                                 main.Show();
-                                this.Close(); // Đóng trang đăng nhập
+                                this.Close(); 
                             }
                             else
                             {
@@ -93,7 +91,6 @@ namespace RemoteMate
             }
         }
 
-        // Mở trang Đăng ký (Giữ nguyên của Phước)
         private void MoTrangDangKy_Click(object sender, MouseButtonEventArgs e)
         {
             RegisterWindow reg = new RegisterWindow();
@@ -101,7 +98,7 @@ namespace RemoteMate
             this.Close();
         }
 
-        // Mở trang Quên mật khẩu (Giữ nguyên của Phước)
+
         private void QuenMatKhau_Click(object sender, MouseButtonEventArgs e)
         {
             ForgotPasswordWindow forgot = new ForgotPasswordWindow();
