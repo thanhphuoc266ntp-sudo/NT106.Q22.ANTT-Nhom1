@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RemoteMate")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bb3ddb871be351495643e923d50f99e0759facd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43b31420509c302a9bf4263d34f209a0c8f00cae")]
 [assembly: System.Reflection.AssemblyProductAttribute("RemoteMate")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RemoteMate")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
