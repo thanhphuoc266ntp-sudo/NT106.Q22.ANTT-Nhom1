@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\LTMCB\\DoAnLTM\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\LTMCB\\DoAnLTM\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|",
       "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|"
     },
@@ -63,55 +67,64 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "LoginWindow.xaml.cs",
-              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs*",
-              "RelativeToolTip": "Project_Remote.App\\Views\\LoginWindow.xaml.cs*",
-              "ViewState": "AgIAAFQAAAAAAAAAAAAIwG8AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T21:15:35.312Z",
+              "Title": ".gitignore",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\.gitignore",
+              "RelativeDocumentMoniker": ".gitignore",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\.gitignore",
+              "RelativeToolTip": ".gitignore",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-09T21:42:07.281Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "LoginWindow.xaml.cs",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "RelativeToolTip": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAIwGcAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-09T21:15:35.312Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "LoginWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml",
               "RelativeToolTip": "Project_Remote.App\\Views\\LoginWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T21:15:31.007Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T21:15:31.007Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "OTPWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\OTPWindow.xaml",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml",
               "RelativeToolTip": "Project_Remote.App\\Views\\OTPWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T06:36:31.121Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T06:36:31.121Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "App.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\App.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\App.xaml",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\App.xaml",
               "RelativeToolTip": "Project_Remote.App\\App.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T06:32:07.118Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T06:32:07.118Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "RegisterWindow.xaml.cs",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
@@ -119,12 +132,11 @@
               "RelativeToolTip": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
               "ViewState": "AgIAAC0AAAAAAAAAAAAYwDwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T05:59:37.849Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T05:59:37.849Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "OTPWindow.xaml.cs",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml.cs",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\OTPWindow.xaml.cs",
@@ -132,24 +144,22 @@
               "RelativeToolTip": "Project_Remote.App\\Views\\OTPWindow.xaml.cs",
               "ViewState": "AgIAAEoAAAAAAAAAAAAgwDkAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T06:36:36.728Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T06:36:36.728Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "RegisterWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\RegisterWindow.xaml",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml",
               "RelativeToolTip": "Project_Remote.App\\Views\\RegisterWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T05:59:00.321Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T05:59:00.321Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "EmailService.cs",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Services\\EmailService.cs",
               "RelativeDocumentMoniker": "Project_Remote.App\\Services\\EmailService.cs",
@@ -161,7 +171,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "NetworkService.cs",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Services\\NetworkService.cs",
               "RelativeDocumentMoniker": "Project_Remote.App\\Services\\NetworkService.cs",
@@ -173,7 +183,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": ".gitkeep",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Protocols\\.gitkeep",
               "RelativeDocumentMoniker": "Project_Remote.App\\Protocols\\.gitkeep",
@@ -185,7 +195,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": ".gitkeep",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Utils\\.gitkeep",
               "RelativeDocumentMoniker": "Project_Remote.App\\Utils\\.gitkeep",
@@ -197,7 +207,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "DatabaseService.cs",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Services\\DatabaseService.cs",
               "RelativeDocumentMoniker": "Project_Remote.App\\Services\\DatabaseService.cs",
