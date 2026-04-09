@@ -1,0 +1,44 @@
+﻿<Window x:Class="RemoteMate.OTPWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RemoteMate - Verification" Height="380" Width="400"
+        WindowStartupLocation="CenterScreen" Background="#0f172a">
+    <Grid>
+        <Border Margin="20" Background="#1e293b" CornerRadius="15" Padding="20">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="MÃ XÁC THỰC" Foreground="#38bdf8" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
+
+                <TextBlock Text="Vui lòng nhập mã số đã gửi về Email của bạn" 
+                           Foreground="#94a3b8" FontSize="13" HorizontalAlignment="Center" 
+                           Margin="0,15,0,20" TextWrapping="Wrap" TextAlignment="Center"/>
+
+                <TextBox Name="txtOTP" Height="50" FontSize="26" FontWeight="Bold" 
+                         Background="#334155" Foreground="White" BorderThickness="0" 
+                         Padding="10" VerticalContentAlignment="Center" 
+                         HorizontalContentAlignment="Center" MaxLength="6"/>
+
+                <Button Content="XÁC NHẬN" Height="45" Margin="0,25,0,0" 
+                        Background="#38bdf8" Foreground="White" FontWeight="Bold" 
+                        BorderThickness="0" Cursor="Hand" Click="btnXacNhan_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="5"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <Button Name="btnResend" Content="Gửi lại mã" 
+                        Background="Transparent" Foreground="#94a3b8" 
+                        BorderThickness="0" Cursor="Hand" FontSize="12" 
+                        Margin="0,15,0,0" HorizontalAlignment="Center" 
+                        Click="btnResend_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter />
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
