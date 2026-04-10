@@ -14,7 +14,7 @@ namespace RemoteMate
         {
             if (!string.IsNullOrEmpty(txtResetEmail.Text))
             {
-                // Sau này sẽ code gửi mail reset tại đây
+              
                 MessageBox.Show("Yêu cầu đã được gửi! Vui lòng kiểm tra Email để nhận mật khẩu mới.", "Thông báo");
 
                 LoginWindow login = new LoginWindow();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
-using MySqlConnector; 
-using RemoteMate.Services; 
+using MySqlConnector;
+using RemoteMate.Services;
 
 namespace RemoteMate
 {
@@ -19,21 +19,16 @@ namespace RemoteMate
             _otpSent = otpCode;
         }
 
-       
         private void btnXacNhan_Click(object sender, RoutedEventArgs e)
         {
-            
             if (txtOTP.Text == _otpSent)
             {
                 try
                 {
-                    
                     DatabaseService dbService = new DatabaseService();
                     using (var connection = dbService.GetConnection())
                     {
                         connection.Open();
-
-                       
                         string query = "INSERT INTO Users (FullName, Username, Email, Password) VALUES (@full, @user, @email, @hash)";
 
                         using (var cmd = new MySqlCommand(query, connection))
@@ -41,15 +36,12 @@ namespace RemoteMate
                             cmd.Parameters.AddWithValue("@full", _fullName);
                             cmd.Parameters.AddWithValue("@user", _username);
                             cmd.Parameters.AddWithValue("@email", _email);
-                            cmd.Parameters.AddWithValue("@hash", _passwordHash); 
-
+                            cmd.Parameters.AddWithValue("@hash", _passwordHash);
                             cmd.ExecuteNonQuery();
                         }
                     }
 
                     MessageBox.Show("Đăng ký tài khoản thành công! Chào mừng bạn đến với RemoteMate.", "Thành công");
-
-                    
                     LoginWindow login = new LoginWindow();
                     login.Show();
                     this.Close();
@@ -65,14 +57,11 @@ namespace RemoteMate
             }
         }
 
-        
         private void btnResend_Click(object sender, RoutedEventArgs e)
         {
-          
             Random rnd = new Random();
             _otpSent = rnd.Next(100000, 999999).ToString();
 
-            
             EmailService emailService = new EmailService();
             if (emailService.SendOTP(_email, _otpSent))
             {

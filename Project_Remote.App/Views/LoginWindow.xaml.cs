@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using MySqlConnector;
-using BCrypt.Net; 
+using BCrypt.Net;
 using RemoteMate.Services;
 
 namespace RemoteMate
@@ -21,17 +21,14 @@ namespace RemoteMate
             placeholderUser.Visibility = string.IsNullOrEmpty(txtUsername.Text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-       
         private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (placeholderPass == null) return;
             placeholderPass.Visibility = string.IsNullOrEmpty(txtPassword.Password) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-       
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            
             string username = txtUsername.Text;
             string password = txtPassword.Password;
 
@@ -43,13 +40,10 @@ namespace RemoteMate
 
             try
             {
-                
                 DatabaseService dbService = new DatabaseService();
                 using (var connection = dbService.GetConnection())
                 {
                     connection.Open();
-
-                    
                     string query = "SELECT Password FROM Users WHERE Username = @user";
 
                     using (var cmd = new MySqlCommand(query, connection))
@@ -57,21 +51,17 @@ namespace RemoteMate
                         cmd.Parameters.AddWithValue("@user", username);
                         var result = cmd.ExecuteScalar();
 
-                        if (result != null) 
+                        if (result != null)
                         {
                             string storedHash = result.ToString();
-
-                           
                             bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(password, storedHash);
 
                             if (isPasswordCorrect)
                             {
                                 MessageBox.Show("Đăng nhập thành công!", "Thành công");
-
-                                
                                 MainWindow main = new MainWindow();
                                 main.Show();
-                                this.Close(); 
+                                this.Close();
                             }
                             else
                             {
@@ -97,7 +87,6 @@ namespace RemoteMate
             reg.Show();
             this.Close();
         }
-
 
         private void QuenMatKhau_Click(object sender, MouseButtonEventArgs e)
         {

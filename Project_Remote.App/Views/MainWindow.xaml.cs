@@ -18,7 +18,7 @@ namespace RemoteMate
             InitializeComponent();
         }
 
-        // Các hàm xử lý sự kiện để không bị lỗi giao diện
+       
         private void BtnLogout_Click(object sender, RoutedEventArgs e) { this.Close(); }
         private void BtnRefresh_Click(object sender, RoutedEventArgs e) { }
         private void BtnWakeOnLan_Click(object sender, RoutedEventArgs e) { }
@@ -31,7 +31,7 @@ namespace RemoteMate
         private void BtnScreenshot_Click(object sender, RoutedEventArgs e) { }
         private void BtnShutdown_Click(object sender, RoutedEventArgs e) { }
 
-        // Các hàm xử lý chuột trên màn hình Remote
+       
         private void ImgRemoteScreen_MouseMove(object sender, MouseEventArgs e) { }
         private void ImgRemoteScreen_MouseDown(object sender, MouseButtonEventArgs e) { }
         private void ImgRemoteScreen_MouseUp(object sender, MouseButtonEventArgs e) { }

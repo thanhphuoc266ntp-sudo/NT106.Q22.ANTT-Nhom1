@@ -3,6 +3,22 @@
   "WorkspaceRootPath": "D:\\LTMCB\\DoAnLTM\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|",
+      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\loginwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\loginwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\otpwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\otpwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\registerwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\registerwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -15,24 +31,8 @@
       "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\otpwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\otpwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\otpwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\loginwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\loginwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\forgotpasswordwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\forgotpasswordwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|",
-      "RelativeMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|solutionrelative:project_remote.app\\views\\loginwindow.xaml.cs||{8B382828-6202-11D1-8870-0000F87579D2}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{37FF7698-734E-C297-0457-EC9F14CF8424}|Project_Remote.App\\RemoteMate.csproj|d:\\ltmcb\\doanltm\\project_remote.app\\remotemate.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
@@ -74,23 +74,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "MainWindow.xaml",
-              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\MainWindow.xaml",
-              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\MainWindow.xaml",
-              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\MainWindow.xaml",
-              "RelativeToolTip": "Project_Remote.App\\Views\\MainWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T23:49:30.022Z",
+              "DocumentIndex": 0,
+              "Title": "LoginWindow.xaml.cs",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "RelativeToolTip": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
+              "ViewState": "AgIAADAAAAAAAAAAAAAqwGEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-09T21:15:35.312Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 1,
               "Title": "LoginWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml",
@@ -102,15 +103,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "OTPWindow.xaml.cs",
-              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\OTPWindow.xaml.cs",
-              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml.cs*",
-              "RelativeToolTip": "Project_Remote.App\\Views\\OTPWindow.xaml.cs*",
-              "ViewState": "AgIAAEcAAAAAAAAAAAAgwEoAAAAMAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "RegisterWindow.xaml.cs",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
+              "RelativeToolTip": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAIwFYAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T06:36:36.728Z",
+              "WhenOpened": "2026-04-09T05:59:37.849Z",
               "EditorCaption": ""
             },
             {
@@ -127,7 +128,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 5,
               "Title": "RegisterWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\RegisterWindow.xaml",
@@ -139,41 +140,51 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "RegisterWindow.xaml.cs",
-              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs",
-              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\RegisterWindow.xaml.cs*",
-              "RelativeToolTip": "Project_Remote.App\\Views\\RegisterWindow.xaml.cs*",
-              "ViewState": "AgIAACcAAAAAAAAAAAAYwEIAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 6,
+              "Title": "OTPWindow.xaml.cs",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\OTPWindow.xaml.cs",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\OTPWindow.xaml.cs",
+              "RelativeToolTip": "Project_Remote.App\\Views\\OTPWindow.xaml.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAIwEsAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T05:59:37.849Z",
+              "WhenOpened": "2026-04-09T06:36:36.728Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 2,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\MainWindow.xaml",
+              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\MainWindow.xaml",
+              "RelativeToolTip": "Project_Remote.App\\Views\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-09T23:49:30.022Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "ForgotPasswordWindow.xaml",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\ForgotPasswordWindow.xaml",
               "RelativeDocumentMoniker": "Project_Remote.App\\Views\\ForgotPasswordWindow.xaml",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\ForgotPasswordWindow.xaml",
               "RelativeToolTip": "Project_Remote.App\\Views\\ForgotPasswordWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-09T23:49:22.791Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T23:49:22.791Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 8,
-              "Title": "RemoteMate",
+              "Title": "RemoteMate.csproj",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\RemoteMate.csproj",
               "RelativeDocumentMoniker": "Project_Remote.App\\RemoteMate.csproj",
               "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\RemoteMate.csproj",
               "RelativeToolTip": "Project_Remote.App\\RemoteMate.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-04-09T23:35:35.28Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T23:35:35.28Z"
             },
             {
               "$type": "Document",
@@ -189,19 +200,6 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "LoginWindow.xaml.cs",
-              "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "ToolTip": "D:\\LTMCB\\DoAnLTM\\Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "RelativeToolTip": "Project_Remote.App\\Views\\LoginWindow.xaml.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAGcAAAA4AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-09T21:15:35.312Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 9,
               "Title": ".gitignore",
               "DocumentMoniker": "D:\\LTMCB\\DoAnLTM\\.gitignore",
@@ -210,8 +208,7 @@
               "RelativeToolTip": ".gitignore",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-04-09T21:42:07.281Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-09T21:42:07.281Z"
             },
             {
               "$type": "Document",
