@@ -4,10 +4,6 @@
         Title="RemoteMate - Dashboard" Height="750" Width="1250"
         WindowStartupLocation="CenterScreen" Background="#F0F2F5">
 
-    <Window.InputBindings>
-        <KeyBinding Key="F1" Command="{Binding SendCtrlAltDelCommand}"/>
-    </Window.InputBindings>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="320"/>
@@ -29,15 +25,13 @@
                 </StackPanel>
 
                 <Border Grid.Row="1" Background="#2c3e50" CornerRadius="12" Margin="15,5,15,15" Padding="12">
-                    <Grid>
-                        <StackPanel>
-                            <TextBlock Name="txtUserName" Text="NguyenKeTruc (Admin)" Foreground="White" FontWeight="SemiBold" FontSize="14"/>
-                            <TextBlock Name="txtUserEmail" Text="truc.uit@gmail.com" Foreground="#95a5a6" FontSize="11"/>
-                            <Button Name="btnLogout" Content="🚪 Đăng xuất" HorizontalAlignment="Right" 
-                                    Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
-                                    FontSize="11" Cursor="Hand" Click="BtnLogout_Click" Margin="0,5,0,0"/>
-                        </StackPanel>
-                    </Grid>
+                    <StackPanel>
+                        <TextBlock x:Name="txtProfileName" Text="" Foreground="White" FontWeight="SemiBold" FontSize="14"/>
+                        <TextBlock x:Name="txtProfileEmail" Text="" Foreground="#95a5a6" FontSize="11"/>
+                        <Button Name="btnLogout" Content="🚪 Đăng xuất" HorizontalAlignment="Right" 
+                                Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
+                                FontSize="11" Cursor="Hand" Click="BtnLogout_Click" Margin="0,5,0,0"/>
+                    </StackPanel>
                 </Border>
 
                 <StackPanel Grid.Row="2" Margin="15,0">
@@ -46,24 +40,14 @@
                         <Button DockPanel.Dock="Right" Content="Refresh" FontSize="10" Padding="8,2" Background="#3d4e5e" Foreground="White" BorderThickness="0" Click="BtnRefresh_Click"/>
                     </DockPanel>
 
-                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="280" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBoxItem Padding="10">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="10" Height="10" Fill="#4cd137" Margin="0,0,12,0"/>
-                                <StackPanel>
-                                    <TextBlock Text="DESKTOP-TARGET-01" FontWeight="Bold"/>
-                                    <TextBlock Text="192.168.1.15" FontSize="10" Foreground="#bdc3c7"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </ListBoxItem>
-                    </ListBox>
+                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="280" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
                     <TextBlock Text="📋 LỊCH SỬ PHIÊN GẦN ĐÂY" Foreground="#bdc3c7" FontSize="12" Margin="0,20,0,5"/>
                     <ListBox Name="lstHistory" Background="#1e272e" BorderThickness="0" Height="100" Foreground="#95a5a6" FontSize="10"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="3" Margin="15,0,15,20">
-                    <Button Name="btnWakeOnLan" Content="⚡ Wake-on-LAN (Mở máy từ xa)" Height="45" 
+                    <Button Name="btnWakeOnLan" Content="⚡ Wake-on-LAN" Height="45" 
                             Background="#4834d4" Foreground="White" FontWeight="Bold" 
                             BorderThickness="0" Cursor="Hand" Click="BtnWakeOnLan_Click">
                         <Button.Resources>
@@ -106,7 +90,7 @@
                     <Button Name="btnFileTransfer" Content="📁 TRUYỀN FILE" Height="45" Margin="5" Background="#00b894" Foreground="White" FontWeight="Bold" Click="BtnFileTransfer_Click"/>
                     <Button Name="btnScreenshot" Content="📸 CHỤP ẢNH" Height="45" Margin="5" Background="#2d3436" Foreground="White" FontWeight="Bold" Click="BtnScreenshot_Click"/>
                     <Button Name="btnLockScreen" Content="🔒 KHÓA MÁY" Height="45" Margin="5" Background="#e67e22" Foreground="White" FontWeight="Bold" Click="BtnLockScreen_Click"/>
-                    <Button Name="btnShutdown" Content="⏻ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
+                    <Button Name="btnShutdown" Content="⛔ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
                 </UniformGrid>
             </Border>
 
@@ -115,7 +99,7 @@
                     <ScrollViewer Name="scrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <Image Name="imgRemoteScreen" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                MouseMove="ImgRemoteScreen_MouseMove" MouseDown="ImgRemoteScreen_MouseDown"
-                               MouseUp="ImgRemoteScreen_MouseUp" Cursor="None" Visibility="Collapsed"/>
+                               MouseUp="ImgRemoteScreen_MouseUp" Visibility="Collapsed"/>
                     </ScrollViewer>
 
                     <StackPanel Name="pnlPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center">

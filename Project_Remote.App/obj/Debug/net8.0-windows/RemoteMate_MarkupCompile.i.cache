@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-D:\LTMCB\DoAnLTM\Project_Remote.App\obj\Debug\net8.0-windows\
+D:\Project_Remote\Project_Remote.App\obj\Debug\net8.0-windows\
 RemoteMate
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-D:\LTMCB\DoAnLTM\Project_Remote.App\App.xaml
-5-1175838359
+D:\Project_Remote\Project_Remote.App\App.xaml
+61105893981
 
-13931903032
-2052127422127
-Views\ForgotPasswordWindow.xaml;Views\LoginWindow.xaml;Views\MainWindow.xaml;Views\OTPWindow.xaml;Views\RegisterWindow.xaml;
+15317337531
+2051925589505
+ResetPasswordWindow.xaml;Views\ForgotPasswordWindow.xaml;Views\LoginWindow.xaml;Views\MainWindow.xaml;Views\OTPWindow.xaml;Views\RegisterWindow.xaml;
 
 False
 
