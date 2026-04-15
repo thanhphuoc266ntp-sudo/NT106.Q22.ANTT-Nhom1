@@ -2,6 +2,7 @@
 using System.Windows;
 using MySqlConnector;
 using RemoteMate.Services;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RemoteMate
 {

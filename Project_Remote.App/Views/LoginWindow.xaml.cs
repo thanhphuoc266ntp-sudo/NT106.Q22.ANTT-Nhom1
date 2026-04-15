@@ -5,6 +5,7 @@ using System.Windows.Input;
 using MySqlConnector;
 using BCrypt.Net;
 using RemoteMate.Services;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RemoteMate
 {
@@ -29,7 +30,7 @@ namespace RemoteMate
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            string userInput = txtUsername.Text; 
+            string userInput = txtUsername.Text;
             string password = txtPassword.Password;
 
             if (string.IsNullOrEmpty(userInput) || string.IsNullOrEmpty(password))
@@ -44,7 +45,7 @@ namespace RemoteMate
                 using (var connection = dbService.GetConnection())
                 {
                     connection.Open();
-                    string query = "SELECT FullName, Email, Password FROM Users WHERE Username = @input OR Email = @input LIMIT 1";
+                    string query = "SELECT FullName, Username, Email, Password FROM Users WHERE Username = @input OR Email = @input LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, connection))
                     {
@@ -57,8 +58,8 @@ namespace RemoteMate
                                 if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                                 {
                                     UserSession.FullName = reader["FullName"].ToString();
+                                    UserSession.Username = reader["Username"].ToString(); 
                                     UserSession.Email = reader["Email"].ToString();
-                                    UserSession.Username = userInput;
 
                                     MainWindow main = new MainWindow();
                                     main.Show();

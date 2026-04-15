@@ -3,6 +3,7 @@ using System.Windows;
 using MySqlConnector;
 using BCrypt.Net;
 using RemoteMate.Services;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RemoteMate
 {
