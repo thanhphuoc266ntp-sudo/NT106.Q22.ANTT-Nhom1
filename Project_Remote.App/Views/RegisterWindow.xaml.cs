@@ -19,11 +19,19 @@ namespace RemoteMate
             string username = txtUser.Text;
             string email = txtEmail.Text;
             string password = txtPass.Password;
+            string confirmPassword = txtConfirmPassword.Password;
 
             if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(username) ||
-                string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) ||
+                string.IsNullOrWhiteSpace(confirmPassword))
             {
                 MessageBox.Show("Vui lòng điền đầy đủ thông tin!", "Thông báo");
+                return;
+            }
+
+            if (password != confirmPassword)
+            {
+                MessageBox.Show("Mật khẩu nhập lại không khớp!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
