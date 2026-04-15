@@ -6,7 +6,6 @@ namespace RemoteMate.Services
 {
     public class EmailService
     {
-        // Thay bằng email và App Password của bạn (hoặc xin bạn của bạn)
         private readonly string _senderEmail = "remotemate.system@gmail.com";
         private readonly string _appPassword = "lmzexdthsizuqxua";
 
@@ -26,21 +25,19 @@ namespace RemoteMate.Services
 
                 using (var client = new SmtpClient())
                 {
-                    // Kết nối tới server Gmail
                     client.Connect("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
 
-                    // Xác thực bằng Mật khẩu ứng dụng (App Password)
                     client.Authenticate(_senderEmail, _appPassword);
 
                     client.Send(message);
                     client.Disconnect(true);
                 }
-                return true; // Gửi thành công
+                return true; 
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Lỗi gửi mail: " + ex.Message);
-                return false; // Gửi thất bại
+                return false; 
             }
         }
     }

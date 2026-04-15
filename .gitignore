@@ -1,2 +1,28 @@
+## --- Visual Studio rác ---
 .vs/
+[Bb]in/
+[Oo]bj/
+*.user
 *.suo
+*.sln.docstates
+*.db-shm
+*.db-wal
+
+## --- Resharper/DotCover/Copilot ---
+_ReSharper*/
+*.dotCover
+.vs/RemoteMate/CopilotIndices/
+
+## --- NuGet Packages ---
+packages/
+*.nuget.props
+*.nuget.targets
+
+## --- Temporary files ---
+*.log
+*.tmp
+*.cache
+
+## --- OS Files ---
+Thumbs.db
+desktop.ini

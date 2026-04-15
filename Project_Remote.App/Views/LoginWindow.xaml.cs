@@ -5,6 +5,7 @@ using System.Windows.Input;
 using MySqlConnector;
 using BCrypt.Net;
 using RemoteMate.Services;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RemoteMate
 {
@@ -29,12 +30,12 @@ namespace RemoteMate
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUsername.Text;
+            string userInput = txtUsername.Text;
             string password = txtPassword.Password;
 
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrEmpty(userInput) || string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -44,40 +45,36 @@ namespace RemoteMate
                 using (var connection = dbService.GetConnection())
                 {
                     connection.Open();
-                    string query = "SELECT Password FROM Users WHERE Username = @user";
+                    string query = "SELECT FullName, Username, Email, Password FROM Users WHERE Username = @input OR Email = @input LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, connection))
                     {
-                        cmd.Parameters.AddWithValue("@user", username);
-                        var result = cmd.ExecuteScalar();
-
-                        if (result != null)
+                        cmd.Parameters.AddWithValue("@input", userInput);
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            string storedHash = result.ToString();
-                            bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(password, storedHash);
+                            if (reader.Read())
+                            {
+                                string storedHash = reader["Password"].ToString();
+                                if (BCrypt.Net.BCrypt.Verify(password, storedHash))
+                                {
+                                    UserSession.FullName = reader["FullName"].ToString();
+                                    UserSession.Username = reader["Username"].ToString(); 
+                                    UserSession.Email = reader["Email"].ToString();
 
-                            if (isPasswordCorrect)
-                            {
-                                MessageBox.Show("Đăng nhập thành công!", "Thành công");
-                                MainWindow main = new MainWindow();
-                                main.Show();
-                                this.Close();
+                                    MainWindow main = new MainWindow();
+                                    main.Show();
+                                    this.Close();
+                                }
+                                else { MessageBox.Show("Mật khẩu không chính xác!"); }
                             }
-                            else
-                            {
-                                MessageBox.Show("Mật khẩu không chính xác!", "Lỗi bảo mật", MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Tài khoản không tồn tại!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                            else { MessageBox.Show("Tài khoản không tồn tại!"); }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối cơ sở dữ liệu: " + ex.Message, "Lỗi Server", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Lỗi kết nối: " + ex.Message);
             }
         }
 

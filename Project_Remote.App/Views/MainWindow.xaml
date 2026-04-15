@@ -4,13 +4,9 @@
         Title="RemoteMate - Dashboard" Height="750" Width="1250"
         WindowStartupLocation="CenterScreen" Background="#F0F2F5">
 
-    <Window.InputBindings>
-        <KeyBinding Key="F1" Command="{Binding SendCtrlAltDelCommand}"/>
-    </Window.InputBindings>
-
-    <Grid>
+    <Grid x:Name="mainRootGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="320"/>
+            <ColumnDefinition x:Name="colSidebar" Width="320"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -30,13 +26,36 @@
 
                 <Border Grid.Row="1" Background="#2c3e50" CornerRadius="12" Margin="15,5,15,15" Padding="12">
                     <Grid>
-                        <StackPanel>
-                            <TextBlock Name="txtUserName" Text="NguyenKeTruc (Admin)" Foreground="White" FontWeight="SemiBold" FontSize="14"/>
-                            <TextBlock Name="txtUserEmail" Text="truc.uit@gmail.com" Foreground="#95a5a6" FontSize="11"/>
-                            <Button Name="btnLogout" Content="🚪 Đăng xuất" HorizontalAlignment="Right" 
-                                    Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
-                                    FontSize="11" Cursor="Hand" Click="BtnLogout_Click" Margin="0,5,0,0"/>
-                        </StackPanel>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Ellipse Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" 
+                 Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,10,0" 
+                 Cursor="Hand" MouseDown="profileDot_MouseDown">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="/Images/avatar.jpg" Stretch="UniformToFill"/>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <TextBlock x:Name="txtProfileName" Grid.Row="0" Grid.Column="1" 
+                   Text="" Foreground="White" FontWeight="SemiBold" FontSize="15" 
+                   VerticalAlignment="Center"/>
+
+                        <Button Name="btnLogout" Grid.Row="0" Grid.Column="2" 
+                Content="🚪 Đăng xuất" VerticalAlignment="Center" 
+                Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
+                FontSize="13" Cursor="Hand" Click="BtnLogout_Click"/>
+
+                        <TextBlock x:Name="txtProfileEmail" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                   Text="" Foreground="#95a5a6" FontSize="13" Margin="0,2,0,0"
+                   TextWrapping="NoWrap" TextTrimming="None"/>
                     </Grid>
                 </Border>
 
@@ -46,24 +65,14 @@
                         <Button DockPanel.Dock="Right" Content="Refresh" FontSize="10" Padding="8,2" Background="#3d4e5e" Foreground="White" BorderThickness="0" Click="BtnRefresh_Click"/>
                     </DockPanel>
 
-                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="280" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBoxItem Padding="10">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="10" Height="10" Fill="#4cd137" Margin="0,0,12,0"/>
-                                <StackPanel>
-                                    <TextBlock Text="DESKTOP-TARGET-01" FontWeight="Bold"/>
-                                    <TextBlock Text="192.168.1.15" FontSize="10" Foreground="#bdc3c7"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </ListBoxItem>
-                    </ListBox>
+                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="280" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto" MouseDoubleClick="lstClients_MouseDoubleClick"/>
 
                     <TextBlock Text="📋 LỊCH SỬ PHIÊN GẦN ĐÂY" Foreground="#bdc3c7" FontSize="12" Margin="0,20,0,5"/>
                     <ListBox Name="lstHistory" Background="#1e272e" BorderThickness="0" Height="100" Foreground="#95a5a6" FontSize="10"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="3" Margin="15,0,15,20">
-                    <Button Name="btnWakeOnLan" Content="⚡ Wake-on-LAN (Mở máy từ xa)" Height="45" 
+                    <Button Name="btnWakeOnLan" Content="⚡ Wake-on-LAN" Height="45" 
                             Background="#4834d4" Foreground="White" FontWeight="Bold" 
                             BorderThickness="0" Cursor="Hand" Click="BtnWakeOnLan_Click">
                         <Button.Resources>
@@ -78,10 +87,10 @@
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition x:Name="rowHeader" Height="Auto"/>
+                <RowDefinition x:Name="rowToolbar" Height="Auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition x:Name="rowFooter" Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0" Margin="20,20,20,0" Padding="15" Background="White" CornerRadius="12">
@@ -106,16 +115,29 @@
                     <Button Name="btnFileTransfer" Content="📁 TRUYỀN FILE" Height="45" Margin="5" Background="#00b894" Foreground="White" FontWeight="Bold" Click="BtnFileTransfer_Click"/>
                     <Button Name="btnScreenshot" Content="📸 CHỤP ẢNH" Height="45" Margin="5" Background="#2d3436" Foreground="White" FontWeight="Bold" Click="BtnScreenshot_Click"/>
                     <Button Name="btnLockScreen" Content="🔒 KHÓA MÁY" Height="45" Margin="5" Background="#e67e22" Foreground="White" FontWeight="Bold" Click="BtnLockScreen_Click"/>
-                    <Button Name="btnShutdown" Content="⏻ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
+                    <Button Name="btnShutdown" Content="⛔ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
                 </UniformGrid>
             </Border>
 
-            <Border Grid.Row="2" Margin="20,10" Background="#2d3436" CornerRadius="15" BorderBrush="#38bdf8" BorderThickness="1">
+            <Border Grid.Row="2" x:Name="borderScreenArea" Margin="20,10" Background="#2d3436" CornerRadius="15" BorderBrush="#38bdf8" BorderThickness="1"
+                    MouseEnter="borderScreenArea_MouseEnter" MouseLeave="borderScreenArea_MouseLeave">
                 <Grid>
+                    <Button x:Name="btnMaximize" Content="❐" Visibility="Collapsed"
+                            HorizontalAlignment="Right" VerticalAlignment="Top" 
+                            Margin="15" Width="35" Height="35" 
+                            Background="#33FFFFFF" Foreground="White" FontSize="20" FontWeight="Bold" 
+                            BorderThickness="0" Cursor="Hand" Panel.ZIndex="10" Click="btnMaximize_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="17"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+
                     <ScrollViewer Name="scrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <Image Name="imgRemoteScreen" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                MouseMove="ImgRemoteScreen_MouseMove" MouseDown="ImgRemoteScreen_MouseDown"
-                               MouseUp="ImgRemoteScreen_MouseUp" Cursor="None" Visibility="Collapsed"/>
+                               MouseUp="ImgRemoteScreen_MouseUp" Visibility="Collapsed"/>
                     </ScrollViewer>
 
                     <StackPanel Name="pnlPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -133,7 +155,7 @@
                         <TextBlock Text="Latency: " Foreground="#7f8c8d" FontSize="11"/>
                         <TextBlock Name="txtLatency" Text="0 ms" Foreground="#00d2d3" FontWeight="Bold" FontSize="11"/>
                     </StackPanel>
-                    <TextBlock Text="RemoteMate v1.0 | UIT Network Programming" Foreground="#95a5a6" FontSize="11" HorizontalAlignment="Right"/>
+                    <TextBlock Text="RemoteMate v1.0" Foreground="#95a5a6" FontSize="11" HorizontalAlignment="Right"/>
                 </DockPanel>
             </Border>
         </Grid>
