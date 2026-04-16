@@ -49,7 +49,6 @@ namespace RemoteMate
                     {
                         MessageBox.Show("Mã xác thực đã được gửi vào Email của bạn!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                        // Chỉ cần gọi resetWindow thôi, xóa cái verifyWindow đi là sạch
                         ResetPasswordWindow resetWindow = new ResetPasswordWindow(email, otpCode);
                         resetWindow.Show();
                         this.Close();

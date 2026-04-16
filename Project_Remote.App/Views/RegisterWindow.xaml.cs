@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using MySqlConnector;
 using BCrypt.Net;
 using RemoteMate.Services;
 using MessageBox = System.Windows.MessageBox;
+using System.Text.RegularExpressions;
 
 namespace RemoteMate
 {
@@ -14,9 +16,26 @@ namespace RemoteMate
             InitializeComponent();
         }
 
+        // Đã đổi tên hàm và cập nhật Regex để hỗ trợ mọi định dạng email chuẩn
+        private bool IsValidEmail(string email)
+        {
+            string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+            return Regex.IsMatch(email, pattern);
+        }
+
+        private bool IsValidUsername(string username)
+        {
+            return Regex.IsMatch(username, @"^[a-zA-Z0-9_]{4,20}$");
+        }
+
+        private bool IsStrongPassword(string password)
+        {
+            return Regex.IsMatch(password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$");
+        }
+
         private void btnRegister_Click(object sender, RoutedEventArgs e)
         {
-            string fullName = txtFullName.Text;
+            string fullName = txtFullName.Text.Trim();
             string username = txtUser.Text.Trim();
             string email = txtEmail.Text.Trim().ToLower();
             string password = txtPass.Password;
@@ -30,23 +49,31 @@ namespace RemoteMate
                 return;
             }
 
+            if (!IsValidUsername(username))
+            {
+                MessageBox.Show("Username chỉ gồm chữ, số, dấu _ và 4-20 ký tự!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Cập nhật lại logic gọi hàm và câu thông báo lỗi
+            if (!IsValidEmail(email))
+            {
+                MessageBox.Show("Định dạng Email không hợp lệ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             if (password != confirmPassword)
             {
                 MessageBox.Show("Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại!", "Lỗi đăng ký", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (password.Length < 6)
+            if (!IsStrongPassword(password))
             {
-                MessageBox.Show("Mật khẩu phải có ít nhất 6 ký tự!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Mật khẩu phải có chữ hoa, chữ thường và số!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (password != confirmPassword)
-            {
-                MessageBox.Show("Mật khẩu nhập lại không khớp!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
 
             try
             {
