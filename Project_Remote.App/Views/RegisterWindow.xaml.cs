@@ -16,7 +16,7 @@ namespace RemoteMate
             InitializeComponent();
         }
 
-        // Đã đổi tên hàm và cập nhật Regex để hỗ trợ mọi định dạng email chuẩn
+
         private bool IsValidEmail(string email)
         {
             string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
@@ -55,7 +55,7 @@ namespace RemoteMate
                 return;
             }
 
-            // Cập nhật lại logic gọi hàm và câu thông báo lỗi
+      
             if (!IsValidEmail(email))
             {
                 MessageBox.Show("Định dạng Email không hợp lệ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
