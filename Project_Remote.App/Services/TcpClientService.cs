@@ -1,6 +1,5 @@
-﻿using System;
-using System.Net.Sockets;
-using System.Threading.Tasks;
+﻿using System.Net.Sockets;
+using System.Text;
 
 namespace RemoteMate.Services
 {
@@ -8,69 +7,106 @@ namespace RemoteMate.Services
     {
         private TcpClient _client;
         private NetworkStream _stream;
-        private bool _isConnected;
+        private volatile bool _isConnected;
         private const int PORT = 8888;
 
         public event Action<byte[]> OnScreenReceived;
         public event Action<string> OnStatusChanged;
         public event Action OnDisconnected;
 
-        public async Task<bool> ConnectAsync(string ipAddress)
+        public async Task<bool> ConnectAsync(string ip)
         {
             try
             {
                 _client = new TcpClient();
-                await _client.ConnectAsync(ipAddress, PORT);
+                await _client.ConnectAsync(ip, PORT);
                 _stream = _client.GetStream();
+
+                OnStatusChanged?.Invoke($"Connected to {ip}");
+
+                bool accepted = await SendControlRequest();
+
+                if (!accepted)
+                {
+                    OnStatusChanged?.Invoke("Access Denied");
+                    Disconnect();
+                    return false;
+                }
+
+                OnStatusChanged?.Invoke("Access Granted");
+
                 _isConnected = true;
+                _ = Task.Run(ReceiveLoop);
 
-                OnStatusChanged?.Invoke($"Connected to {ipAddress}:{PORT}");
-
-                _ = Task.Run(ReceiveScreenData);
                 return true;
             }
             catch (Exception ex)
             {
-                OnStatusChanged?.Invoke($"Connection failed: {ex.Message}");
+                OnStatusChanged?.Invoke($"Error: {ex.Message}");
                 return false;
             }
         }
 
-        private async Task ReceiveScreenData()
+        private async Task<bool> SendControlRequest()
+        {
+            try
+            {
+                string msg = $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}\n";
+                byte[] data = Encoding.UTF8.GetBytes(msg);
+
+                await _stream.WriteAsync(data, 0, data.Length);
+
+                byte[] buffer = new byte[1024];
+
+                var readTask = _stream.ReadAsync(buffer, 0, buffer.Length);
+                if (await Task.WhenAny(readTask, Task.Delay(5000)) != readTask)
+                    return false;
+
+                string response = Encoding.UTF8.GetString(buffer, 0, readTask.Result).Trim();
+
+                return response == "ACCEPT";
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> ReadExact(byte[] buffer, int size)
+        {
+            int total = 0;
+            while (total < size)
+            {
+                int read = await _stream.ReadAsync(buffer, total, size - total);
+                if (read == 0) return false;
+                total += read;
+            }
+            return true;
+        }
+
+        private async Task ReceiveLoop()
         {
             try
             {
                 while (_isConnected && _client.Connected)
                 {
-                    byte[] lengthBuffer = new byte[4];
-                    int bytesRead = await _stream.ReadAsync(lengthBuffer, 0, 4);
+                    byte[] lenBuf = new byte[4];
+                    bool ok = await ReadExact(lenBuf, 4);
+                    if (!ok) break;
 
-                    if (bytesRead != 4)
+                    int size = BitConverter.ToInt32(lenBuf, 0);
+
+                    if (size <= 0 || size > 10_000_000)
                         break;
 
-                    int imageSize = BitConverter.ToInt32(lengthBuffer, 0);
+                    byte[] img = new byte[size];
+                    ok = await ReadExact(img, size);
+                    if (!ok) break;
 
-                    byte[] imageBuffer = new byte[imageSize];
-                    int totalBytesRead = 0;
-
-                    while (totalBytesRead < imageSize)
-                    {
-                        int read = await _stream.ReadAsync(imageBuffer, totalBytesRead, imageSize - totalBytesRead);
-                        if (read == 0)
-                            break;
-                        totalBytesRead += read;
-                    }
-
-                    if (totalBytesRead == imageSize)
-                    {
-                        OnScreenReceived?.Invoke(imageBuffer);
-                    }
+                    OnScreenReceived?.Invoke(img);
                 }
             }
-            catch (Exception ex)
-            {
-                OnStatusChanged?.Invoke($"Receive error: {ex.Message}");
-            }
+            catch { }
             finally
             {
                 Disconnect();
@@ -79,16 +115,15 @@ namespace RemoteMate.Services
 
         public void Disconnect()
         {
+            if (!_isConnected) return;
+
             _isConnected = false;
-            _stream?.Close();
-            _client?.Close();
+
+            try { _stream?.Close(); } catch { }
+            try { _client?.Close(); } catch { }
+
             OnDisconnected?.Invoke();
             OnStatusChanged?.Invoke("Disconnected");
-        }
-
-        public bool IsConnected()
-        {
-            return _isConnected && _client != null && _client.Connected;
         }
     }
 }

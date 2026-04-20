@@ -8,6 +8,7 @@ using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using MouseWheelEventArgs = System.Windows.Input.MouseWheelEventArgs;
 using RemoteMate.Services;
+using RemoteMate.Views;
 
 namespace RemoteMate
 {
@@ -16,42 +17,84 @@ namespace RemoteMate
         private bool _isMaximizedMode = false;
         private TcpServerService _serverService;
         private TcpClientService _clientService;
-        private string _remoteIp;
+        private NetworkService _networkService;
+        private string _remoteIp = string.Empty;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadUserInfo();
+            UserSession.InitNetworkInfo();
+
             StartServer();
+            StartNetworkDiscovery();
         }
 
         private void LoadUserInfo()
         {
             if (!string.IsNullOrEmpty(UserSession.FullName))
             {
-                txtProfileName.Text = UserSession.FullName;
-                txtProfileEmail.Text = UserSession.Email;
+                txtProfileName.Text = UserSession.FullName ?? string.Empty;
+                txtProfileEmail.Text = UserSession.Email ?? string.Empty;
             }
         }
 
         private void StartServer()
         {
             _serverService = new TcpServerService();
+
             _serverService.OnStatusChanged += (msg) =>
             {
                 Dispatcher.Invoke(() => txtConnectionStatus.Text = $"Trạng thái: {msg}");
             };
+
+            _serverService.OnControlRequest += async (req) =>
+            {
+                bool result = false;
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    string info = $"{req.UserName} ({req.FromIp}) muốn điều khiển máy của bạn";
+                    var win = new ConfirmWindow(info);
+                    win.Title = "Yêu cầu điều khiển";
+                    result = win.ShowDialog() == true;
+                });
+
+                return result;
+            };
+
             _serverService.Start();
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        private void StartNetworkDiscovery()
         {
-            _serverService?.Stop();
-            _clientService?.Disconnect();
-            UserSession.Clear();
-            LoginWindow login = new LoginWindow();
-            login.Show();
-            this.Close();
+            _networkService = new NetworkService();
+
+            _networkService.OnClientFound += (client) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    string item = $"{client.Ip} ({client.HostName})";
+
+                    bool exists = false;
+
+                    foreach (var i in lstClients.Items)
+                    {
+                        if (i.ToString().StartsWith(client.Ip))
+                        {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!exists)
+                    {
+                        lstClients.Items.Add(item);
+                    }
+                });
+            };
+
+            _networkService.StartDiscovery();
         }
 
         private void profileDot_MouseDown(object sender, MouseButtonEventArgs e)
@@ -85,6 +128,28 @@ namespace RemoteMate
         {
             ChangePasswordWindow changePwd = new ChangePasswordWindow();
             changePwd.ShowDialog();
+        }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Bạn có chắc muốn đăng xuất?",
+                "Đăng xuất",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                _clientService?.Disconnect();
+                _serverService?.Stop();
+                _networkService?.Stop(); // 🔥 quan trọng
+
+                UserSession.Clear();
+
+                var loginWindow = new LoginWindow();
+                loginWindow.Show();
+                this.Close();
+            }
         }
 
         private void borderScreenArea_MouseEnter(object sender, MouseEventArgs e)
@@ -129,15 +194,14 @@ namespace RemoteMate
 
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)
         {
-            lstClients.Items.Clear();
-            lstClients.Items.Add("192.168.1.107");
+            lstClients.Items.Clear(); // 🔥 đúng chuẩn
         }
 
         private void lstClients_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (lstClients.SelectedItem != null)
             {
-                string selected = lstClients.SelectedItem.ToString();
+                string selected = lstClients.SelectedItem.ToString() ?? string.Empty;
                 _remoteIp = selected.Split(' ')[0];
                 txtRemoteMachine.Text = _remoteIp;
             }
