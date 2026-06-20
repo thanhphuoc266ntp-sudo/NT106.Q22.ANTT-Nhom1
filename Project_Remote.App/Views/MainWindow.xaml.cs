@@ -22,6 +22,9 @@ namespace RemoteMate
         private NetworkService _network_service;
         private string _remoteIp = string.Empty;
 
+        // Chat server
+        private ChatServerService _chatServer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -30,6 +33,19 @@ namespace RemoteMate
 
             StartServer();
             StartNetworkDiscovery();
+
+            // Start chat server and hook messages
+            _chatServer = new ChatServerService();
+            _chatServer.OnStatusChanged += (s) => Dispatcher.Invoke(() => txtConnectionStatus.Text = $"Trạng thái: {s}");
+            _chatServer.OnMessageReceived += (msg) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    // Simple UI action: show a toast/MessageBox or update chat control
+                    MessageBox.Show($"{msg.FromUserName} ({msg.FromIp})\n\n{msg.Message}", "Tin nhắn mới", MessageBoxButton.OK, MessageBoxImage.Information);
+                });
+            };
+            _chatServer.Start();
         }
 
         private void LoadUserInfo()
@@ -315,6 +331,7 @@ namespace RemoteMate
             try
             {
                 _client_service?.Disconnect();
+                (_client_service as IDisposable)?.Dispose();
             }
             catch (Exception ex)
             {
@@ -338,6 +355,12 @@ namespace RemoteMate
             {
                 Debug.WriteLine($"Error while stopping network discovery on close: {ex}");
             }
+
+            try
+            {
+                _chatServer?.Stop();
+            }
+            catch { }
         }
 
         private void BtnControlMode_Unchecked(object sender, RoutedEventArgs e)

@@ -6,19 +6,23 @@ using System.Threading.Tasks;
 
 namespace RemoteMate.Services
 {
-    public class TcpClientService
+    public class TcpClientService : IDisposable
     {
-        private TcpClient _client;
-        private NetworkStream _stream;
+        private TcpClient? _client;
+        private NetworkStream? _stream;
         private volatile bool _isConnected;
         private const int PORT = 9000;
 
         // Send lock to serialize input commands
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
+        private bool _disposed;
 
         public event Action<byte[]> OnScreenReceived;
         public event Action<string> OnStatusChanged;
         public event Action OnDisconnected;
+
+        // Expose connection state for UI wiring
+        public bool IsConnected => _isConnected && (_client?.Connected ?? false);
 
         public async Task<bool> ConnectAsync(string ip)
         {
@@ -64,6 +68,7 @@ namespace RemoteMate.Services
                     : $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}|{token}\n";
                 byte[] data = Encoding.UTF8.GetBytes(msg);
 
+                if (_stream == null) return false;
                 await _stream.WriteAsync(data, 0, data.Length);
 
                 // Đọc chính xác 6 byte trả lời ("ACCEPT" hoặc "REJECT") với timeout 5000 ms
@@ -88,7 +93,7 @@ namespace RemoteMate.Services
         public async Task SendInputAsync(string command)
         {
             if (_stream == null || string.IsNullOrWhiteSpace(command)) return;
-            if (!_client?.Connected ?? true) return;
+            if (!IsConnected) return;
 
             await _sendLock.WaitAsync();
             try
@@ -128,6 +133,7 @@ namespace RemoteMate.Services
 
         private async Task<bool> ReadExact(byte[] buffer, int size)
         {
+            if (_stream == null) return false;
             int total = 0;
             while (total < size)
             {
@@ -142,7 +148,7 @@ namespace RemoteMate.Services
         {
             try
             {
-                while (_isConnected && _client.Connected)
+                while (_isConnected && (_client?.Connected ?? false))
                 {
                     byte[] lenBuf = new byte[4];
                     bool ok = await ReadExact(lenBuf, 4);
@@ -174,6 +180,7 @@ namespace RemoteMate.Services
                 // Even if not marked as connected, close resources to ensure socket is released.
                 try { _stream?.Close(); } catch { }
                 try { _client?.Close(); } catch { }
+                try { _sendLock?.Dispose(); } catch { }
                 OnDisconnected?.Invoke();
                 OnStatusChanged?.Invoke("Disconnected");
                 return;
@@ -183,9 +190,31 @@ namespace RemoteMate.Services
 
             try { _stream?.Close(); } catch { }
             try { _client?.Close(); } catch { }
+            try { _sendLock?.Dispose(); } catch { }
 
             OnDisconnected?.Invoke();
             OnStatusChanged?.Invoke("Disconnected");
+        }
+
+        // IDisposable implementation for cleanup
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                try { _sendLock?.Dispose(); } catch { }
+                try { _stream?.Close(); } catch { }
+                try { _client?.Close(); } catch { }
+            }
+
+            _disposed = true;
         }
     }
 }
