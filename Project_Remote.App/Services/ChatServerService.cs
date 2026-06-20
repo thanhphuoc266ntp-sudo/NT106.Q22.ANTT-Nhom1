@@ -1,33 +1,36 @@
-﻿using RemoteMate.Models;
-using System;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using RemoteMate.Models;
 
 namespace RemoteMate.Services
 {
     public class ChatServerService
     {
-        private TcpListener? _listener;
-        private CancellationTokenSource _cts = new();
+        private TcpListener _listener;
+        private CancellationTokenSource _cts = new CancellationTokenSource();
         private volatile bool _isRunning;
+
         private const int PORT = 9002;
 
-        public event Action<string>? OnStatusChanged;
         public event Action<ChatMessage>? OnMessageReceived;
+        public event Action<string>? OnStatusChanged;
 
         public void Start()
         {
-            if (_isRunning) return;
+            if (_isRunning)
+                return;
 
             _isRunning = true;
             _cts = new CancellationTokenSource();
 
             _listener = new TcpListener(IPAddress.Any, PORT);
             _listener.Start();
+
             OnStatusChanged?.Invoke($"Chat server started on port {PORT}");
 
             Task.Run(async () =>
@@ -36,14 +39,16 @@ namespace RemoteMate.Services
                 {
                     try
                     {
-                        var client = await _listener.AcceptTcpClientAsync(_cts.Token);
+                        TcpClient client = await _listener.AcceptTcpClientAsync(_cts.Token);
                         _ = Task.Run(() => HandleClient(client, _cts.Token));
                     }
                     catch (OperationCanceledException)
                     {
                         break;
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             });
         }
@@ -53,48 +58,55 @@ namespace RemoteMate.Services
             try
             {
                 using (client)
-                using (var stream = client.GetStream())
-                using (var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
+                using (NetworkStream stream = client.GetStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
                 {
                     string? line = await reader.ReadLineAsync();
-                    if (string.IsNullOrWhiteSpace(line)) return;
 
-                    var parts = line.Split('|');
-                    if (parts.Length != 4) return;
-                    if (parts[0] != "CHAT") return;
+                    if (string.IsNullOrWhiteSpace(line))
+                        return;
 
-                    try
+                    string[] parts = line.Split('|');
+
+                    if (parts.Length != 4 || parts[0] != "CHAT")
+                        return;
+
+                    string fromIp = FromBase64(parts[1]);
+                    string fromUserName = FromBase64(parts[2]);
+                    string message = FromBase64(parts[3]);
+
+                    ChatMessage chatMessage = new ChatMessage
                     {
-                        string fromIp = Encoding.UTF8.GetString(Convert.FromBase64String(parts[1]));
-                        string fromUser = Encoding.UTF8.GetString(Convert.FromBase64String(parts[2]));
-                        string message = Encoding.UTF8.GetString(Convert.FromBase64String(parts[3]));
+                        FromIp = fromIp,
+                        FromUserName = fromUserName,
+                        Message = message,
+                        SentAt = DateTime.Now,
+                        IsMine = false
+                    };
 
-                        var msg = new ChatMessage
-                        {
-                            FromIp = fromIp,
-                            FromUserName = fromUser,
-                            Message = message,
-                            SentAt = DateTime.Now,
-                            IsMine = false
-                        };
-
-                        OnMessageReceived?.Invoke(msg);
-                        OnStatusChanged?.Invoke($"Tin nhắn từ {fromUser} ({fromIp})");
-                    }
-                    catch
-                    {
-                        // Ignore malformed base64 / decoding errors
-                    }
+                    OnMessageReceived?.Invoke(chatMessage);
+                    OnStatusChanged?.Invoke($"Nhận tin nhắn từ {fromUserName}");
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                OnStatusChanged?.Invoke("Lỗi nhận tin nhắn: " + ex.Message);
+            }
+        }
+
+        private string FromBase64(string base64)
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            return Encoding.UTF8.GetString(bytes);
         }
 
         public void Stop()
         {
             _isRunning = false;
-            _cts.Cancel();
+
+            try { _cts.Cancel(); } catch { }
             try { _listener?.Stop(); } catch { }
+
             OnStatusChanged?.Invoke("Chat server stopped");
         }
     }

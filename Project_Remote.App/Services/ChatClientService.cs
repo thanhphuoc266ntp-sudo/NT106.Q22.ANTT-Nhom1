@@ -1,8 +1,7 @@
 ﻿using System;
-using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace RemoteMate.Services
@@ -13,46 +12,57 @@ namespace RemoteMate.Services
 
         public event Action<string>? OnStatusChanged;
 
-        public async Task SendMessageAsync(string remoteIp, string message)
+        public async Task<bool> SendMessageAsync(string remoteIp, string message)
         {
             if (string.IsNullOrWhiteSpace(remoteIp))
             {
                 OnStatusChanged?.Invoke("Chưa chọn máy nhận tin nhắn.");
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(message))
             {
                 OnStatusChanged?.Invoke("Tin nhắn rỗng.");
-                return;
+                return false;
             }
 
             try
             {
-                using var client = new TcpClient();
-                await client.ConnectAsync(remoteIp, PORT);
+                using (TcpClient client = new TcpClient())
+                {
+                    await client.ConnectAsync(remoteIp, PORT);
 
-                using var stream = client.GetStream();
+                    using (NetworkStream stream = client.GetStream())
+                    {
+                        string fromIp = ((System.Net.IPEndPoint)client.Client.LocalEndPoint).Address.ToString();
+                        string fromUserName = UserSession.Username ?? "Unknown";
 
-                string fromIp = ((IPEndPoint)client.Client.LocalEndPoint!).Address.ToString();
-                string fromUserName = UserSession.Username ?? "Unknown";
+                        string payload =
+                            "CHAT|" +
+                            ToBase64(fromIp) + "|" +
+                            ToBase64(fromUserName) + "|" +
+                            ToBase64(message) + "\n";
 
-                string bIp = Convert.ToBase64String(Encoding.UTF8.GetBytes(fromIp));
-                string bUser = Convert.ToBase64String(Encoding.UTF8.GetBytes(fromUserName));
-                string bMsg = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+                        byte[] data = Encoding.UTF8.GetBytes(payload);
 
-                string payload = $"CHAT|{bIp}|{bUser}|{bMsg}\n";
-                byte[] data = Encoding.UTF8.GetBytes(payload);
-
-                await stream.WriteAsync(data, 0, data.Length);
-                await stream.FlushAsync();
+                        await stream.WriteAsync(data, 0, data.Length);
+                        await stream.FlushAsync();
+                    }
+                }
 
                 OnStatusChanged?.Invoke("Đã gửi tin nhắn.");
+                return true;
             }
             catch (Exception ex)
             {
-                OnStatusChanged?.Invoke($"Lỗi gửi: {ex.Message}");
+                OnStatusChanged?.Invoke("Lỗi gửi tin nhắn: " + ex.Message);
+                return false;
             }
+        }
+
+        private string ToBase64(string text)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
         }
     }
 }
