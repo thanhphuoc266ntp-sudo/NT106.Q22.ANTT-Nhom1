@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -16,8 +18,8 @@ namespace RemoteMate
     {
         private bool _isMaximizedMode = false;
         private TcpServerService _serverService;
-        private TcpClientService _clientService;
-        private NetworkService _networkService;
+        private TcpClientService _client_service;
+        private NetworkService _network_service;
         private string _remoteIp = string.Empty;
 
         public MainWindow()
@@ -68,9 +70,9 @@ namespace RemoteMate
 
         private void StartNetworkDiscovery()
         {
-            _networkService = new NetworkService();
+            _network_service = new NetworkService();
 
-            _networkService.OnClientFound += (client) =>
+            _network_service.OnClientFound += (client) =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -94,7 +96,7 @@ namespace RemoteMate
                 });
             };
 
-            _networkService.StartDiscovery();
+            _network_service.StartDiscovery();
         }
 
         private void profileDot_MouseDown(object sender, MouseButtonEventArgs e)
@@ -140,9 +142,22 @@ namespace RemoteMate
 
             if (result == MessageBoxResult.Yes)
             {
-                _clientService?.Disconnect();
+                // Revoke token local (nếu có) để vô hiệu hoá ngay trên host hiện tại.
+                if (!string.IsNullOrEmpty(UserSession.AccessToken))
+                {
+                    try
+                    {
+                        AuthService.RevokeToken(UserSession.AccessToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Revoke token failed: {ex}");
+                    }
+                }
+
+                _client_service?.Disconnect();
                 _serverService?.Stop();
-                _networkService?.Stop(); // 🔥 quan trọng
+                _network_service?.Stop(); // 🔥 quan trọng
 
                 UserSession.Clear();
 
@@ -207,7 +222,7 @@ namespace RemoteMate
             }
         }
 
-        private void BtnControlMode_Checked(object sender, RoutedEventArgs e)
+        private async void BtnControlMode_Checked(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_remoteIp))
             {
@@ -216,18 +231,18 @@ namespace RemoteMate
                 return;
             }
 
-            ConnectToRemote();
+            await ConnectToRemote();
         }
 
-        private async void ConnectToRemote()
+        private async Task ConnectToRemote()
         {
             btnControlMode.IsEnabled = false;
             txtConnectionStatus.Text = $"Đang kết nối đến {_remoteIp}...";
             ledConnection.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(241, 196, 15));
 
-            _clientService = new TcpClientService();
+            _client_service = new TcpClientService();
 
-            _clientService.OnScreenReceived += (imageData) =>
+            _client_service.OnScreenReceived += (imageData) =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -249,11 +264,14 @@ namespace RemoteMate
                         imgRemoteScreen.Visibility = Visibility.Visible;
                         pnlPlaceholder.Visibility = Visibility.Collapsed;
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error processing screen image: {ex}");
+                    }
                 });
             };
 
-            _clientService.OnStatusChanged += (msg) =>
+            _client_service.OnStatusChanged += (msg) =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -266,7 +284,7 @@ namespace RemoteMate
                 });
             };
 
-            _clientService.OnDisconnected += () =>
+            _client_service.OnDisconnected += () =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -280,7 +298,7 @@ namespace RemoteMate
                 });
             };
 
-            bool connected = await _clientService.ConnectAsync(_remoteIp);
+            bool connected = await _client_service.ConnectAsync(_remoteIp);
 
             if (!connected)
             {
@@ -290,14 +308,46 @@ namespace RemoteMate
             }
         }
 
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            base.OnClosing(e);
+
+            try
+            {
+                _client_service?.Disconnect();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error while disconnecting client on close: {ex}");
+            }
+
+            try
+            {
+                _serverService?.Stop();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error while stopping server on close: {ex}");
+            }
+
+            try
+            {
+                _network_service?.Stop();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error while stopping network discovery on close: {ex}");
+            }
+        }
+
         private void BtnControlMode_Unchecked(object sender, RoutedEventArgs e)
         {
-            _clientService?.Disconnect();
+            _client_service?.Disconnect();
         }
 
         private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
         {
-            _clientService?.Disconnect();
+            _client_service?.Disconnect();
             btnControlMode.IsChecked = false;
         }
 

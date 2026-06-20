@@ -1,5 +1,7 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace RemoteMate.Services
 {
@@ -8,7 +10,7 @@ namespace RemoteMate.Services
         private TcpClient _client;
         private NetworkStream _stream;
         private volatile bool _isConnected;
-        private const int PORT = 8888;
+        private const int PORT = 9000;
 
         public event Action<byte[]> OnScreenReceived;
         public event Action<string> OnStatusChanged;
@@ -51,19 +53,25 @@ namespace RemoteMate.Services
         {
             try
             {
-                string msg = $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}\n";
+                // Gửi token kèm theo (nếu có)
+                string token = UserSession.AccessToken ?? string.Empty;
+                string msg = string.IsNullOrEmpty(token)
+                    ? $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}\n"
+                    : $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}|{token}\n";
                 byte[] data = Encoding.UTF8.GetBytes(msg);
 
                 await _stream.WriteAsync(data, 0, data.Length);
 
-                byte[] buffer = new byte[1024];
-
-                var readTask = _stream.ReadAsync(buffer, 0, buffer.Length);
+                // Đọc chính xác 6 byte trả lời ("ACCEPT" hoặc "REJECT") với timeout 5000 ms
+                byte[] buffer = new byte[6];
+                var readTask = ReadExact(buffer, 6);
                 if (await Task.WhenAny(readTask, Task.Delay(5000)) != readTask)
-                    return false;
+                    return false; // timeout
 
-                string response = Encoding.UTF8.GetString(buffer, 0, readTask.Result).Trim();
+                bool ok = readTask.Result;
+                if (!ok) return false;
 
+                string response = Encoding.UTF8.GetString(buffer, 0, 6);
                 return response == "ACCEPT";
             }
             catch
@@ -115,7 +123,15 @@ namespace RemoteMate.Services
 
         public void Disconnect()
         {
-            if (!_isConnected) return;
+            if (!_isConnected)
+            {
+                // Even if not marked as connected, close resources to ensure socket is released.
+                try { _stream?.Close(); } catch { }
+                try { _client?.Close(); } catch { }
+                OnDisconnected?.Invoke();
+                OnStatusChanged?.Invoke("Disconnected");
+                return;
+            }
 
             _isConnected = false;
 

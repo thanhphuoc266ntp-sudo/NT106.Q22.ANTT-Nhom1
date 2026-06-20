@@ -1,74 +1,98 @@
-using RemoteMate;
-using RemoteMate.Models;
+﻿using RemoteMate.Models;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
-public class NetworkService
+namespace RemoteMate.Services
 {
-    private UdpClient udp;
-    private bool _running;
-
-    public event Action<ClientInfo> OnClientFound;
-
-    public void StartDiscovery()
+    public class NetworkService
     {
-        _running = true;
+        private UdpClient udp;
+        private bool _running;
 
-        udp = new UdpClient(8888);
-        udp.EnableBroadcast = true;
+        public event Action<ClientInfo> OnClientFound;
 
-        Task.Run(Listen);
-        Task.Run(Broadcast);
-    }
-
-    public void Stop()
-    {
-        _running = false;
-        udp?.Close();
-    }
-
-    private async Task Broadcast()
-    {
-        using var sender = new UdpClient();
-        sender.EnableBroadcast = true;
-
-        while (_running)
+        public void StartDiscovery()
         {
             try
             {
-                string msg = UserSession.HostName ?? "Unknown";
-                byte[] data = Encoding.UTF8.GetBytes(msg);
+                _running = true;
 
-                await sender.SendAsync(data, data.Length,
-                    new IPEndPoint(IPAddress.Broadcast, 8888));
+                // NÂNG CẤP 1: Cho phép nhiều app dùng chung Port 8888 (rất tiện để test local)
+                udp = new UdpClient();
+                udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                udp.Client.Bind(new IPEndPoint(IPAddress.Any, 8888));
+                udp.EnableBroadcast = true;
 
-                await Task.Delay(2000);
+                Task.Run(Listen);
+                Task.Run(Broadcast);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khởi tạo UDP: {ex.Message}");
+            }
         }
-    }
 
-    private async Task Listen()
-    {
-        while (_running)
+        public void Stop()
         {
-            try
-            {
-                var result = await udp.ReceiveAsync();
+            _running = false;
+            udp?.Close();
+        }
 
-                var client = new ClientInfo
+        private async Task Broadcast()
+        {
+            using var sender = new UdpClient();
+            sender.EnableBroadcast = true;
+
+            while (_running)
+            {
+                try
                 {
-                    Ip = result.RemoteEndPoint.Address.ToString(),
-                    HostName = Encoding.UTF8.GetString(result.Buffer),
-                    LastSeen = DateTime.Now
-                };
+                    // NÂNG CẤP 2: Dùng Environment.MachineName làm định danh để chống tự soi gương
+                    string msg = Environment.MachineName;
+                    byte[] data = Encoding.UTF8.GetBytes(msg);
 
-                OnClientFound?.Invoke(client);
+                    await sender.SendAsync(data, data.Length, new IPEndPoint(IPAddress.Broadcast, 8888));
+
+                    await Task.Delay(2000);
+                }
+                catch { }
             }
-            catch
+        }
+
+        private async Task Listen()
+        {
+            while (_running)
             {
-                break;
+                try
+                {
+                    var result = await udp.ReceiveAsync();
+
+                    string remoteIp = result.RemoteEndPoint.Address.ToString();
+                    string receivedHostName = Encoding.UTF8.GetString(result.Buffer);
+
+                    // NÂNG CẤP 3: LỌC BỎ CHÍNH MÌNH (Chặn hiện tượng Loopback)
+                    // Nếu tên máy nhận được giống hệt tên máy mình, lập tức ngó lơ!
+                    if (receivedHostName == Environment.MachineName || remoteIp == "127.0.0.1")
+                    {
+                        continue;
+                    }
+
+                    var client = new ClientInfo
+                    {
+                        Ip = remoteIp,
+                        HostName = receivedHostName,
+                        LastSeen = DateTime.Now
+                    };
+
+                    OnClientFound?.Invoke(client);
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
     }
