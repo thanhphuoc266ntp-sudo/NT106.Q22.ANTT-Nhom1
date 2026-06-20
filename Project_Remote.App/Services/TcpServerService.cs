@@ -6,6 +6,8 @@ using System.Text;
 using System.Security.Claims;
 using RemoteMate.Services;
 using System.Threading;
+using System.Threading.Tasks;
+using System;
 
 namespace RemoteMate.Services
 {
@@ -110,6 +112,22 @@ namespace RemoteMate.Services
                     OnStatusChanged?.Invoke($"Accepted: {req.UserName}");
 
                     var capture = new ScreenCaptureService();
+                    var inputService = new RemoteInputService();
+
+                    // Start read-loop for input commands concurrently
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            while (_isRunning && client.Connected && !token.IsCancellationRequested)
+                            {
+                                string? cmd = await reader.ReadLineAsync();
+                                if (string.IsNullOrWhiteSpace(cmd)) continue;
+                                inputService.Execute(cmd);
+                            }
+                        }
+                        catch { }
+                    }, token);
 
                     while (_isRunning && client.Connected && !token.IsCancellationRequested)
                     {

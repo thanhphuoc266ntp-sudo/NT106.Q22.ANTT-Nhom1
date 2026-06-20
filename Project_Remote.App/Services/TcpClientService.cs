@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RemoteMate.Services
@@ -11,6 +12,9 @@ namespace RemoteMate.Services
         private NetworkStream _stream;
         private volatile bool _isConnected;
         private const int PORT = 9000;
+
+        // Send lock to serialize input commands
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
         public event Action<byte[]> OnScreenReceived;
         public event Action<string> OnStatusChanged;
@@ -79,6 +83,48 @@ namespace RemoteMate.Services
                 return false;
             }
         }
+
+        // NEW: Send input command (thread-safe, ensures newline and flush)
+        public async Task SendInputAsync(string command)
+        {
+            if (_stream == null || string.IsNullOrWhiteSpace(command)) return;
+            if (!_client?.Connected ?? true) return;
+
+            await _sendLock.WaitAsync();
+            try
+            {
+                byte[] data = Encoding.UTF8.GetBytes(command + "\n");
+                await _stream.WriteAsync(data, 0, data.Length);
+                await _stream.FlushAsync();
+            }
+            catch
+            {
+                // swallow - caller can observe disconnection via events
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
+        }
+
+        // NEW: convenience helpers
+        public Task SendMouseMoveAsync(int x, int y) =>
+            SendInputAsync($"INPUT|MOVE|{x}|{y}");
+
+        public Task SendMouseDownAsync(string button, int x, int y) =>
+            SendInputAsync($"INPUT|DOWN|{button}|{x}|{y}");
+
+        public Task SendMouseUpAsync(string button, int x, int y) =>
+            SendInputAsync($"INPUT|UP|{button}|{x}|{y}");
+
+        public Task SendMouseWheelAsync(int delta, int x, int y) =>
+            SendInputAsync($"INPUT|WHEEL|{delta}|{x}|{y}");
+
+        public Task SendKeyDownAsync(int virtualKey) =>
+            SendInputAsync($"INPUT|KEYDOWN|{virtualKey}");
+
+        public Task SendKeyUpAsync(int virtualKey) =>
+            SendInputAsync($"INPUT|KEYUP|{virtualKey}");
 
         private async Task<bool> ReadExact(byte[] buffer, int size)
         {
