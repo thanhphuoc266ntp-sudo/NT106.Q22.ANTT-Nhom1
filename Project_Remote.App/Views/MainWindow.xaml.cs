@@ -10,6 +10,7 @@ using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using MouseWheelEventArgs = System.Windows.Input.MouseWheelEventArgs;
 using RemoteMate.Services;
 using RemoteMate.Views;
+using RemoteMate.Models;
 
 namespace RemoteMate
 {
@@ -23,6 +24,12 @@ namespace RemoteMate
         private ChatServerService _chatServerService;
         private ChatWindow _chatWindow;
         private DateTime _lastMouseMoveSent = DateTime.MinValue;
+        private SessionHistoryService _sessionHistoryService = new SessionHistoryService();
+        private DateTime? _currentControllerSessionStart;
+        private string _currentControllerRemoteUsername = string.Empty;
+        private string _currentControllerRemoteHostName = string.Empty;
+        private DateTime? _currentReceiverSessionStart;
+        private ControlRequest _currentReceiverRequest;
 
         public MainWindow()
         {
@@ -33,6 +40,8 @@ namespace RemoteMate
             StartServer();
             StartChatServer();
             StartNetworkDiscovery();
+
+            _ = LoadRecentSessionHistoryAsync();
         }
 
         private void StartChatServer()
@@ -68,6 +77,159 @@ namespace RemoteMate
             }
         }
 
+        private async Task LoadRecentSessionHistoryAsync()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(UserSession.Username))
+                    return;
+
+                var historyItems = await _sessionHistoryService.GetRecentSessionsAsync(UserSession.Username, 10);
+
+                Dispatcher.Invoke(() =>
+                {
+                    lstHistory.Items.Clear();
+
+                    if (historyItems.Count == 0)
+                    {
+                        lstHistory.Items.Add("Chưa có phiên điều khiển nào");
+                        return;
+                    }
+
+                    foreach (var item in historyItems)
+                    {
+                        lstHistory.Items.Add(item.DisplayText);
+                    }
+                });
+            }
+            catch
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    lstHistory.Items.Clear();
+                    lstHistory.Items.Add("Không tải được lịch sử phiên");
+                });
+            }
+        }
+
+        private async Task SaveControllerSessionAsync(string status, string note)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(UserSession.Username))
+                    return;
+
+                DateTime startTime = _currentControllerSessionStart ?? DateTime.Now;
+                DateTime endTime = DateTime.Now;
+
+                int durationSeconds = Math.Max(0, (int)(endTime - startTime).TotalSeconds);
+
+                SessionHistoryItem item = new SessionHistoryItem
+                {
+                    OwnerUsername = UserSession.Username ?? string.Empty,
+                    Role = "Controller",
+                    RemoteUsername = _currentControllerRemoteUsername,
+                    RemoteHostName = _currentControllerRemoteHostName,
+                    RemoteIp = _remoteIp,
+                    StartTime = startTime,
+                    EndTime = endTime,
+                    DurationSeconds = durationSeconds,
+                    Status = status,
+                    Note = note
+                };
+
+                await _sessionHistoryService.AddSessionAsync(item);
+
+                _currentControllerSessionStart = null;
+
+                await LoadRecentSessionHistoryAsync();
+            }
+            catch
+            {
+          
+            }
+        }
+
+        private async Task SaveReceiverSessionAsync(ControlRequest req, string status, string note)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(UserSession.Username))
+                    return;
+
+                DateTime startTime = _currentReceiverSessionStart ?? DateTime.Now;
+                DateTime endTime = DateTime.Now;
+
+                int durationSeconds = Math.Max(0, (int)(endTime - startTime).TotalSeconds);
+
+                SessionHistoryItem item = new SessionHistoryItem
+                {
+                    OwnerUsername = UserSession.Username ?? string.Empty,
+                    Role = "Receiver",
+                    RemoteUsername = req.UserName,
+                    RemoteHostName = req.HostName,
+                    RemoteIp = req.FromIp,
+                    StartTime = startTime,
+                    EndTime = endTime,
+                    DurationSeconds = durationSeconds,
+                    Status = status,
+                    Note = note
+                };
+
+                await _sessionHistoryService.AddSessionAsync(item);
+
+                _currentReceiverSessionStart = null;
+                _currentReceiverRequest = null;
+
+                await LoadRecentSessionHistoryAsync();
+            }
+            catch
+            {
+               
+            }
+        }
+
+        private string ExtractClientInfoFromText(string text)
+        {
+            int start = text.IndexOf('(');
+            int end = text.IndexOf(')');
+
+            if (start >= 0 && end > start)
+            {
+                return text.Substring(start + 1, end - start - 1).Trim();
+            }
+
+            return string.Empty;
+        }
+
+        private string ExtractUserNameFromClientText(string text)
+        {
+            string info = ExtractClientInfoFromText(text);
+
+            int slashIndex = info.IndexOf('/');
+
+            if (slashIndex >= 0)
+            {
+                return info.Substring(0, slashIndex).Trim();
+            }
+
+            return string.Empty;
+        }
+
+        private string ExtractHostNameFromClientText(string text)
+        {
+            string info = ExtractClientInfoFromText(text);
+
+            int slashIndex = info.IndexOf('/');
+
+            if (slashIndex >= 0)
+            {
+                return info.Substring(slashIndex + 1).Trim();
+            }
+
+            return info;
+        }
+
         private void StartServer()
         {
             _serverService = new TcpServerService();
@@ -92,6 +254,30 @@ namespace RemoteMate
                 return result;
             };
 
+            _serverService.OnSessionAccepted += (req) =>
+            {
+                _currentReceiverSessionStart = DateTime.Now;
+                _currentReceiverRequest = req;
+            };
+
+            _serverService.OnSessionRejected += (req) =>
+            {
+                _ = SaveReceiverSessionAsync(
+                    req,
+                    "Rejected",
+                    "Người dùng từ chối yêu cầu điều khiển"
+                );
+            };
+
+            _serverService.OnSessionEnded += (req) =>
+            {
+                _ = SaveReceiverSessionAsync(
+                    req,
+                    "Completed",
+                    "Phiên điều khiển kết thúc"
+                );
+            };
+
             _serverService.Start();
         }
 
@@ -112,23 +298,24 @@ namespace RemoteMate
 
                 Dispatcher.Invoke(() =>
                 {
-                    string item = $"{client.Ip} ({client.HostName})";
+                    string remoteName = !string.IsNullOrWhiteSpace(client.UserName)
+                        ? $"{client.UserName} / {client.HostName}"
+                        : client.HostName;
 
-                    bool exists = false;
+                    string item = $"{client.Ip} ({remoteName})";
 
-                    foreach (var i in lstClients.Items)
+                    for (int i = 0; i < lstClients.Items.Count; i++)
                     {
-                        if (i.ToString().StartsWith(client.Ip))
+                        string existing = lstClients.Items[i]?.ToString() ?? string.Empty;
+
+                        if (existing.StartsWith(client.Ip + " "))
                         {
-                            exists = true;
-                            break;
+                            lstClients.Items[i] = item;
+                            return;
                         }
                     }
 
-                    if (!exists)
-                    {
-                        lstClients.Items.Add(item);
-                    }
+                    lstClients.Items.Add(item);
                 });
             };
 
@@ -242,6 +429,8 @@ namespace RemoteMate
             {
                 string selected = lstClients.SelectedItem.ToString() ?? string.Empty;
                 _remoteIp = selected.Split(' ')[0];
+                _currentControllerRemoteUsername = ExtractUserNameFromClientText(selected);
+                _currentControllerRemoteHostName = ExtractHostNameFromClientText(selected);
                 txtRemoteMachine.Text = _remoteIp;
             }
         }
@@ -307,6 +496,8 @@ namespace RemoteMate
 
             _clientService.OnDisconnected += () =>
             {
+                _ = SaveControllerSessionAsync("Completed", "Người dùng ngắt kết nối");
+
                 Dispatcher.Invoke(() =>
                 {
                     ledConnection.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(231, 76, 60));
@@ -321,8 +512,14 @@ namespace RemoteMate
 
             bool connected = await _clientService.ConnectAsync(_remoteIp);
 
-            if (!connected)
+            if (connected)
             {
+                _currentControllerSessionStart = DateTime.Now;
+            }
+            else
+            {
+                await SaveControllerSessionAsync("Failed", "Kết nối thất bại hoặc bị từ chối");
+
                 btnControlMode.IsEnabled = true;
                 btnControlMode.IsChecked = false;
                 ledConnection.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(231, 76, 60));
@@ -340,7 +537,6 @@ namespace RemoteMate
             btnControlMode.IsChecked = false;
         }
 
-        private void BtnWakeOnLan_Click(object sender, RoutedEventArgs e) { }
         private void BtnFileTransfer_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_remoteIp))

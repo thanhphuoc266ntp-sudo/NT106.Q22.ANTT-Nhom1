@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Controls;
 using RemoteMate.Models;
 using RemoteMate.Services;
+using System.IO;
+using WpfOpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 using WpfKey = System.Windows.Input.Key;
 using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
@@ -35,6 +37,46 @@ namespace RemoteMate.Views
         private async void btnSend_Click(object sender, RoutedEventArgs e)
         {
             await SendCurrentMessageAsync();
+        }
+
+        private async void btnAttachFile_Click(object sender, RoutedEventArgs e)
+        {
+            WpfOpenFileDialog dialog = new WpfOpenFileDialog
+            {
+                Title = "Chọn file để gửi",
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            string filePath = dialog.FileName;
+            string fileName = Path.GetFileName(filePath);
+
+            bool sent = await _chatClientService.SendFileAsync(_remoteIp, filePath);
+
+            if (sent)
+            {
+                ChatMessage fileMessage = new ChatMessage
+                {
+                    FromIp = UserSession.IpAddress ?? string.Empty,
+                    FromUserName = UserSession.Username ?? "Bạn",
+                    Message = $"Đã gửi file: {fileName}",
+                    SentAt = DateTime.Now,
+                    IsMine = true
+                };
+
+                AddMessageToUi(fileMessage);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Không gửi được file. Kiểm tra máy nhận hoặc firewall port 9002.",
+                    "Lỗi gửi file",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
         }
 
         private async void txtMessage_KeyDown(object sender, WpfKeyEventArgs e)

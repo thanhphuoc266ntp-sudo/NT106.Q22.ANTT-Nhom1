@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RemoteMate.Models
 {
@@ -11,6 +7,8 @@ namespace RemoteMate.Models
         public string FromIp { get; set; } = string.Empty;
 
         public string UserName { get; set; } = string.Empty;
+
+        public string HostName { get; set; } = string.Empty;
 
         public DateTime RequestTime { get; set; } = DateTime.Now;
     }

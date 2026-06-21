@@ -67,22 +67,37 @@
                         <Button DockPanel.Dock="Right" Content="Refresh" FontSize="10" Padding="8,2" Background="#3d4e5e" Foreground="White" BorderThickness="0" Click="BtnRefresh_Click"/>
                     </DockPanel>
 
-                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="280" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto" MouseDoubleClick="lstClients_MouseDoubleClick"/>
+                    <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="230" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto" MouseDoubleClick="lstClients_MouseDoubleClick"/>
 
-                    <TextBlock Text="📋 LỊCH SỬ PHIÊN GẦN ĐÂY" Foreground="#bdc3c7" FontSize="12" Margin="0,20,0,5"/>
-                    <ListBox Name="lstHistory" Background="#1e272e" BorderThickness="0" Height="100" Foreground="#95a5a6" FontSize="10"/>
-                </StackPanel>
+                    <TextBlock Text="📋 LỊCH SỬ PHIÊN GẦN ĐÂY"
+           Foreground="#bdc3c7"
+           FontSize="12"
+           Margin="0,20,0,8"/>
 
-                <StackPanel Grid.Row="3" Margin="15,0,15,20">
-                    <Button Name="btnWakeOnLan" Content="⚡ Wake-on-LAN" Height="45" 
-                            Background="#4834d4" Foreground="White" FontWeight="Bold" 
-                            BorderThickness="0" Cursor="Hand" Click="BtnWakeOnLan_Click">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="8"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+                    <Border Background="#2c3e50"
+        CornerRadius="0"
+        Padding="8"
+        Height="220">
+
+                        <ListBox Name="lstHistory"
+             Background="Transparent"
+             BorderThickness="0"
+             Foreground="#dfe6e9"
+             FontSize="10"
+             ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="2"/>
+                                    <Setter Property="Margin" Value="0,2,0,2"/>
+                                    <Setter Property="Foreground" Value="#dfe6e9"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+
+                        </ListBox>
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>

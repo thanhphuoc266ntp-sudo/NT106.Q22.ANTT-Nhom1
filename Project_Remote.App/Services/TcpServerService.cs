@@ -11,10 +11,12 @@ namespace RemoteMate.Services
         private TcpListener _listener = null!;
         private CancellationTokenSource _cts = new();
         private volatile bool _isRunning;
-        private const int PORT = 9000; // Đổi sang 9000 để tránh conflict với UDP 8888
-
+        private const int PORT = 9000;
         public event Action<string>? OnStatusChanged;
         public event Func<ControlRequest, Task<bool>>? OnControlRequest;
+        public event Action<ControlRequest>? OnSessionAccepted;
+        public event Action<ControlRequest>? OnSessionRejected;
+        public event Action<ControlRequest>? OnSessionEnded;
 
         public void Start()
         {
@@ -36,7 +38,7 @@ namespace RemoteMate.Services
                     }
                     catch (OperationCanceledException)
                     {
-                        break; // Stop() được gọi, thoát vòng lặp
+                        break; 
                     }
                     catch { }
                 }
@@ -45,13 +47,15 @@ namespace RemoteMate.Services
 
         private async Task HandleClient(TcpClient client, CancellationToken token)
         {
+            ControlRequest? currentRequest = null;
+            bool sessionAccepted = false;
+
             try
             {
                 using (client)
                 using (var stream = client.GetStream())
                 using (var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
                 {
-                    // Đọc message an toàn bằng StreamReader
                     string? message = await reader.ReadLineAsync();
                     if (string.IsNullOrWhiteSpace(message)) return;
                     if (!message.StartsWith("CONTROL_REQUEST")) return;
@@ -62,8 +66,11 @@ namespace RemoteMate.Services
                     var req = new ControlRequest
                     {
                         FromIp = parts[1],
-                        UserName = parts[2]
+                        UserName = parts[2],
+                        HostName = parts.Length >= 4 ? parts[3] : string.Empty
                     };
+
+                    currentRequest = req;
 
                     bool accepted = false;
                     if (OnControlRequest != null)
@@ -73,7 +80,14 @@ namespace RemoteMate.Services
                     byte[] res = Encoding.UTF8.GetBytes(response);
                     await stream.WriteAsync(res, token);
 
-                    if (!accepted) return;
+                    if (!accepted)
+                    {
+                        OnSessionRejected?.Invoke(req);
+                        return;
+                    }
+
+                    sessionAccepted = true;
+                    OnSessionAccepted?.Invoke(req);
 
                     OnStatusChanged?.Invoke($"Accepted: {req.UserName}");
 
@@ -106,7 +120,7 @@ namespace RemoteMate.Services
                         try
                         {
                             var start = DateTime.Now;
-                            byte[] img = capture.CaptureScreen(30);
+                            byte[] img = capture.CaptureScreen(70);
                             byte[] len = BitConverter.GetBytes(img.Length);
 
                             await stream.WriteAsync(len.AsMemory(0, 4), token);
@@ -130,6 +144,11 @@ namespace RemoteMate.Services
             catch { }
             finally
             {
+                if (sessionAccepted && currentRequest != null)
+                {
+                    OnSessionEnded?.Invoke(currentRequest);
+                }
+
                 OnStatusChanged?.Invoke("Client disconnected");
             }
         }
@@ -137,7 +156,7 @@ namespace RemoteMate.Services
         public void Stop()
         {
             _isRunning = false;
-            _cts.Cancel();      // Hủy tất cả task đang chạy
+            _cts.Cancel();      
             _listener?.Stop();
             OnStatusChanged?.Invoke("Server stopped");
         }

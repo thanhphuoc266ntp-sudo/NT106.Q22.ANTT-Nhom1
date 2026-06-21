@@ -54,7 +54,10 @@ namespace RemoteMate.Services
         {
             try
             {
-                string msg = $"CONTROL_REQUEST|{UserSession.IpAddress}|{UserSession.Username}\n";
+                string localIp = ((System.Net.IPEndPoint)_client.Client.LocalEndPoint!).Address.ToString();
+                string hostName = UserSession.HostName ?? Environment.MachineName;
+                string username = UserSession.Username ?? "Unknown";
+                string msg = $"CONTROL_REQUEST|{localIp}|{username}|{hostName}\n";
                 byte[] data = Encoding.UTF8.GetBytes(msg);
 
                 await _stream.WriteAsync(data, 0, data.Length);

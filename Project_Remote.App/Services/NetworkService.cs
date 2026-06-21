@@ -40,7 +40,10 @@ public class NetworkService
         {
             try
             {
-                string msg = UserSession.HostName ?? "Unknown";
+                string username = UserSession.Username ?? "Unknown";
+                string hostName = UserSession.HostName ?? Environment.MachineName;
+
+                string msg = $"DISCOVER|{username}|{hostName}";
                 byte[] data = Encoding.UTF8.GetBytes(msg);
 
                 foreach (var broadcastIp in GetBroadcastAddresses())
@@ -102,10 +105,24 @@ public class NetworkService
             {
                 var result = await udp.ReceiveAsync();
 
+                string message = Encoding.UTF8.GetString(result.Buffer);
+
+                string username = string.Empty;
+                string hostName = message;
+
+                var parts = message.Split('|');
+
+                if (parts.Length >= 3 && parts[0] == "DISCOVER")
+                {
+                    username = parts[1];
+                    hostName = parts[2];
+                }
+
                 var client = new ClientInfo
                 {
                     Ip = result.RemoteEndPoint.Address.ToString(),
-                    HostName = Encoding.UTF8.GetString(result.Buffer),
+                    UserName = username,
+                    HostName = hostName,
                     LastSeen = DateTime.Now
                 };
 
