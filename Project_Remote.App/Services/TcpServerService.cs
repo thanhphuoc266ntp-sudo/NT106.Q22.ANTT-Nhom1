@@ -3,11 +3,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Security.Claims;
-using RemoteMate.Services;
-using System.Threading;
-using System.Threading.Tasks;
-using System;
 
 namespace RemoteMate.Services
 {
@@ -70,64 +65,41 @@ namespace RemoteMate.Services
                         UserName = parts[2]
                     };
 
-                    // Lấy token nếu có
-                    string tokenStr = parts.Length >= 4 ? parts[3] : string.Empty;
-
-                    // Validate token (nếu có). Nếu không hợp lệ -> REJECT
-                    if (!string.IsNullOrEmpty(tokenStr))
-                    {
-                        string? validationError;
-                        var principal = AuthService.ValidateToken(tokenStr, out validationError);
-                        if (principal == null)
-                        {
-                            byte[] res = Encoding.UTF8.GetBytes("REJECT");
-                            await stream.WriteAsync(res.AsMemory(0, res.Length), token);
-                            return;
-                        }
-
-                        // Optional: đảm bảo token username trùng với request username
-                        var nameClaim = principal.FindFirst("name")?.Value ?? principal.FindFirst(ClaimTypes.Name)?.Value;
-                        if (!string.IsNullOrEmpty(nameClaim) && nameClaim != req.UserName)
-                        {
-                            byte[] res = Encoding.UTF8.GetBytes("REJECT");
-                            await stream.WriteAsync(res.AsMemory(0, res.Length), token);
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        // Nếu muốn bắt buộc token, có thể REJECT ở đây. Hiện cho phép request không token.
-                    }
-
                     bool accepted = false;
                     if (OnControlRequest != null)
                         accepted = await OnControlRequest.Invoke(req);
 
                     string response = accepted ? "ACCEPT" : "REJECT";
-                    byte[] resBytes = Encoding.UTF8.GetBytes(response);
-                    await stream.WriteAsync(resBytes.AsMemory(0, resBytes.Length), token);
+                    byte[] res = Encoding.UTF8.GetBytes(response);
+                    await stream.WriteAsync(res, token);
 
                     if (!accepted) return;
 
                     OnStatusChanged?.Invoke($"Accepted: {req.UserName}");
 
-                    var capture = new ScreenCaptureService();
                     var inputService = new RemoteInputService();
 
-                    // Start read-loop for input commands concurrently
                     _ = Task.Run(async () =>
                     {
-                        try
+                        while (_isRunning && client.Connected && !token.IsCancellationRequested)
                         {
-                            while (_isRunning && client.Connected && !token.IsCancellationRequested)
+                            try
                             {
-                                string? cmd = await reader.ReadLineAsync();
-                                if (string.IsNullOrWhiteSpace(cmd)) continue;
-                                inputService.Execute(cmd);
+                                string? command = await reader.ReadLineAsync();
+
+                                if (command == null)
+                                    break;
+
+                                inputService.Execute(command);
+                            }
+                            catch
+                            {
+                                break;
                             }
                         }
-                        catch { }
                     }, token);
+
+                    var capture = new ScreenCaptureService();
 
                     while (_isRunning && client.Connected && !token.IsCancellationRequested)
                     {

@@ -2,7 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="RemoteMate - Dashboard" Height="750" Width="1250"
-        WindowStartupLocation="CenterScreen" Background="#F0F2F5">
+        WindowStartupLocation="CenterScreen" Background="#F0F2F5"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewKeyUp="Window_PreviewKeyUp">
 
     <Grid x:Name="mainRootGrid">
         <Grid.ColumnDefinitions>
@@ -112,7 +114,7 @@
             <Border Grid.Row="1" Margin="20,10,20,0" Padding="10" Background="White" CornerRadius="12">
                 <UniformGrid Columns="5">
                     <ToggleButton Name="btnControlMode" Content="🎮 ĐIỀU KHIỂN" Height="45" Margin="5" Background="#4834d4" Foreground="White" FontWeight="Bold" Checked="BtnControlMode_Checked" Unchecked="BtnControlMode_Unchecked"/>
-                    <Button Name="btnFileTransfer" Content="📁 TRUYỀN FILE" Height="45" Margin="5" Background="#00b894" Foreground="White" FontWeight="Bold" Click="BtnFileTransfer_Click"/>
+                    <Button Name="btnFileTransfer" Content="💬 CHAT" Height="45" Margin="5" Background="#00b894" Foreground="White" FontWeight="Bold" Click="BtnFileTransfer_Click"/>
                     <Button Name="btnScreenshot" Content="📸 CHỤP ẢNH" Height="45" Margin="5" Background="#2d3436" Foreground="White" FontWeight="Bold" Click="BtnScreenshot_Click"/>
                     <Button Name="btnLockScreen" Content="🔒 KHÓA MÁY" Height="45" Margin="5" Background="#e67e22" Foreground="White" FontWeight="Bold" Click="BtnLockScreen_Click"/>
                     <Button Name="btnShutdown" Content="⛔ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
@@ -136,8 +138,12 @@
 
                     <ScrollViewer Name="scrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <Image Name="imgRemoteScreen" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                               MouseMove="ImgRemoteScreen_MouseMove" MouseDown="ImgRemoteScreen_MouseDown"
-                               MouseUp="ImgRemoteScreen_MouseUp" Visibility="Collapsed"/>
+                               Focusable="True"
+                               MouseMove="ImgRemoteScreen_MouseMove"
+                               MouseDown="ImgRemoteScreen_MouseDown"
+                               MouseUp="ImgRemoteScreen_MouseUp"
+                               MouseWheel="ImgRemoteScreen_MouseWheel"
+                               Visibility="Collapsed"/>
                     </ScrollViewer>
 
                     <StackPanel Name="pnlPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center">

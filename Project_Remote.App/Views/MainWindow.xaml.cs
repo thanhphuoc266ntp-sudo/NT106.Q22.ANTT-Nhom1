@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Windows.Input;
 using MessageBox = System.Windows.MessageBox;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
@@ -18,12 +17,12 @@ namespace RemoteMate
     {
         private bool _isMaximizedMode = false;
         private TcpServerService _serverService;
-        private TcpClientService _client_service;
-        private NetworkService _network_service;
+        private TcpClientService _clientService;
+        private NetworkService _networkService;
         private string _remoteIp = string.Empty;
-
-        // Chat server
-        private ChatServerService _chatServer;
+        private ChatServerService _chatServerService;
+        private ChatWindow _chatWindow;
+        private DateTime _lastMouseMoveSent = DateTime.MinValue;
 
         public MainWindow()
         {
@@ -32,20 +31,32 @@ namespace RemoteMate
             UserSession.InitNetworkInfo();
 
             StartServer();
+            StartChatServer();
             StartNetworkDiscovery();
+        }
 
-            // Start chat server and hook messages
-            _chatServer = new ChatServerService();
-            _chatServer.OnStatusChanged += (s) => Dispatcher.Invoke(() => txtConnectionStatus.Text = $"Trạng thái: {s}");
-            _chatServer.OnMessageReceived += (msg) =>
+        private void StartChatServer()
+        {
+            _chatServerService = new ChatServerService();
+
+            _chatServerService.OnMessageReceived += (chatMessage) =>
             {
                 Dispatcher.Invoke(() =>
                 {
-                    // Simple UI action: show a toast/MessageBox or update chat control
-                    MessageBox.Show($"{msg.FromUserName} ({msg.FromIp})\n\n{msg.Message}", "Tin nhắn mới", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (_chatWindow == null || !_chatWindow.IsVisible)
+                    {
+                        _chatWindow = new ChatWindow(chatMessage.FromIp, chatMessage.FromUserName);
+                        _chatWindow.Owner = this;
+                        _chatWindow.Closed += (s, e) => _chatWindow = null;
+                        _chatWindow.Show();
+                    }
+
+                    _chatWindow.AddIncomingMessage(chatMessage);
+                    _chatWindow.Activate();
                 });
             };
-            _chatServer.Start();
+
+            _chatServerService.Start();
         }
 
         private void LoadUserInfo()
@@ -86,10 +97,19 @@ namespace RemoteMate
 
         private void StartNetworkDiscovery()
         {
-            _network_service = new NetworkService();
+            _networkService = new NetworkService();
 
-            _network_service.OnClientFound += (client) =>
+            _networkService.OnClientFound += (client) =>
             {
+                if (client.Ip == UserSession.IpAddress)
+                    return;
+
+                if (client.HostName == UserSession.HostName)
+                    return;
+
+                if (client.Ip == "127.0.0.1")
+                    return;
+
                 Dispatcher.Invoke(() =>
                 {
                     string item = $"{client.Ip} ({client.HostName})";
@@ -112,7 +132,7 @@ namespace RemoteMate
                 });
             };
 
-            _network_service.StartDiscovery();
+            _networkService.StartDiscovery();
         }
 
         private void profileDot_MouseDown(object sender, MouseButtonEventArgs e)
@@ -158,22 +178,10 @@ namespace RemoteMate
 
             if (result == MessageBoxResult.Yes)
             {
-                // Revoke token local (nếu có) để vô hiệu hoá ngay trên host hiện tại.
-                if (!string.IsNullOrEmpty(UserSession.AccessToken))
-                {
-                    try
-                    {
-                        AuthService.RevokeToken(UserSession.AccessToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Revoke token failed: {ex}");
-                    }
-                }
-
-                _client_service?.Disconnect();
+                _clientService?.Disconnect();
                 _serverService?.Stop();
-                _network_service?.Stop(); // 🔥 quan trọng
+                _chatServerService?.Stop();
+                _networkService?.Stop();
 
                 UserSession.Clear();
 
@@ -238,7 +246,7 @@ namespace RemoteMate
             }
         }
 
-        private async void BtnControlMode_Checked(object sender, RoutedEventArgs e)
+        private void BtnControlMode_Checked(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_remoteIp))
             {
@@ -247,18 +255,18 @@ namespace RemoteMate
                 return;
             }
 
-            await ConnectToRemote();
+            ConnectToRemote();
         }
 
-        private async Task ConnectToRemote()
+        private async void ConnectToRemote()
         {
             btnControlMode.IsEnabled = false;
             txtConnectionStatus.Text = $"Đang kết nối đến {_remoteIp}...";
             ledConnection.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(241, 196, 15));
 
-            _client_service = new TcpClientService();
+            _clientService = new TcpClientService();
 
-            _client_service.OnScreenReceived += (imageData) =>
+            _clientService.OnScreenReceived += (imageData) =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -280,14 +288,11 @@ namespace RemoteMate
                         imgRemoteScreen.Visibility = Visibility.Visible;
                         pnlPlaceholder.Visibility = Visibility.Collapsed;
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error processing screen image: {ex}");
-                    }
+                    catch { }
                 });
             };
 
-            _client_service.OnStatusChanged += (msg) =>
+            _clientService.OnStatusChanged += (msg) =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -300,7 +305,7 @@ namespace RemoteMate
                 });
             };
 
-            _client_service.OnDisconnected += () =>
+            _clientService.OnDisconnected += () =>
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -314,7 +319,7 @@ namespace RemoteMate
                 });
             };
 
-            bool connected = await _client_service.ConnectAsync(_remoteIp);
+            bool connected = await _clientService.ConnectAsync(_remoteIp);
 
             if (!connected)
             {
@@ -324,64 +329,196 @@ namespace RemoteMate
             }
         }
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            base.OnClosing(e);
-
-            try
-            {
-                _client_service?.Disconnect();
-                (_client_service as IDisposable)?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error while disconnecting client on close: {ex}");
-            }
-
-            try
-            {
-                _serverService?.Stop();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error while stopping server on close: {ex}");
-            }
-
-            try
-            {
-                _network_service?.Stop();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error while stopping network discovery on close: {ex}");
-            }
-
-            try
-            {
-                _chatServer?.Stop();
-            }
-            catch { }
-        }
-
         private void BtnControlMode_Unchecked(object sender, RoutedEventArgs e)
         {
-            _client_service?.Disconnect();
+            _clientService?.Disconnect();
         }
 
         private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
         {
-            _client_service?.Disconnect();
+            _clientService?.Disconnect();
             btnControlMode.IsChecked = false;
         }
 
         private void BtnWakeOnLan_Click(object sender, RoutedEventArgs e) { }
-        private void BtnFileTransfer_Click(object sender, RoutedEventArgs e) { }
+        private void BtnFileTransfer_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_remoteIp))
+            {
+                MessageBox.Show(
+                    "Vui lòng chọn một thiết bị trước khi mở chat!",
+                    "Thông báo",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                );
+                return;
+            }
+
+            string remoteName = _remoteIp;
+
+            if (lstClients.SelectedItem != null)
+            {
+                remoteName = lstClients.SelectedItem.ToString() ?? _remoteIp;
+            }
+
+            if (_chatWindow == null || !_chatWindow.IsVisible)
+            {
+                _chatWindow = new ChatWindow(_remoteIp, remoteName);
+                _chatWindow.Owner = this;
+                _chatWindow.Closed += (s, args) => _chatWindow = null;
+                _chatWindow.Show();
+            }
+            else
+            {
+                _chatWindow.Activate();
+            }
+        }
         private void BtnScreenshot_Click(object sender, RoutedEventArgs e) { }
         private void BtnLockScreen_Click(object sender, RoutedEventArgs e) { }
         private void BtnShutdown_Click(object sender, RoutedEventArgs e) { }
-        private void ImgRemoteScreen_MouseMove(object sender, MouseEventArgs e) { }
-        private void ImgRemoteScreen_MouseDown(object sender, MouseButtonEventArgs e) { }
-        private void ImgRemoteScreen_MouseUp(object sender, MouseButtonEventArgs e) { }
-        private void ImgRemoteScreen_MouseWheel(object sender, MouseWheelEventArgs e) { }
+        private bool IsRemoteInputReady()
+        {
+            return _clientService != null &&
+                   btnControlMode.IsChecked == true &&
+                   imgRemoteScreen.Source is BitmapSource;
+        }
+
+        private bool TryGetRemotePoint(MouseEventArgs e, out int remoteX, out int remoteY)
+        {
+            remoteX = 0;
+            remoteY = 0;
+
+            if (imgRemoteScreen.Source is not BitmapSource bitmap)
+                return false;
+
+            double imageWidth = bitmap.PixelWidth;
+            double imageHeight = bitmap.PixelHeight;
+
+            double controlWidth = imgRemoteScreen.ActualWidth;
+            double controlHeight = imgRemoteScreen.ActualHeight;
+
+            if (imageWidth <= 0 || imageHeight <= 0 || controlWidth <= 0 || controlHeight <= 0)
+                return false;
+
+            System.Windows.Point pos = e.GetPosition(imgRemoteScreen);
+
+            double scale = Math.Min(controlWidth / imageWidth, controlHeight / imageHeight);
+
+            double renderedWidth = imageWidth * scale;
+            double renderedHeight = imageHeight * scale;
+
+            double offsetX = (controlWidth - renderedWidth) / 2;
+            double offsetY = (controlHeight - renderedHeight) / 2;
+
+            double x = (pos.X - offsetX) / scale;
+            double y = (pos.Y - offsetY) / scale;
+
+            if (x < 0 || y < 0 || x >= imageWidth || y >= imageHeight)
+                return false;
+
+            remoteX = Math.Clamp((int)Math.Round(x), 0, bitmap.PixelWidth - 1);
+            remoteY = Math.Clamp((int)Math.Round(y), 0, bitmap.PixelHeight - 1);
+
+            return true;
+        }
+
+        private string GetMouseButtonName(MouseButton button)
+        {
+            return button switch
+            {
+                MouseButton.Left => "Left",
+                MouseButton.Right => "Right",
+                MouseButton.Middle => "Middle",
+                _ => "Left"
+            };
+        }
+
+        private async void ImgRemoteScreen_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            if ((DateTime.Now - _lastMouseMoveSent).TotalMilliseconds < 15)
+                return;
+
+            if (TryGetRemotePoint(e, out int x, out int y))
+            {
+                _lastMouseMoveSent = DateTime.Now;
+                await _clientService.SendMouseMoveAsync(x, y);
+            }
+        }
+
+        private async void ImgRemoteScreen_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            imgRemoteScreen.Focus();
+            imgRemoteScreen.CaptureMouse();
+
+            if (TryGetRemotePoint(e, out int x, out int y))
+            {
+                string button = GetMouseButtonName(e.ChangedButton);
+                await _clientService.SendMouseDownAsync(button, x, y);
+                e.Handled = true;
+            }
+        }
+
+        private async void ImgRemoteScreen_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            imgRemoteScreen.ReleaseMouseCapture();
+
+            if (TryGetRemotePoint(e, out int x, out int y))
+            {
+                string button = GetMouseButtonName(e.ChangedButton);
+                await _clientService.SendMouseUpAsync(button, x, y);
+                e.Handled = true;
+            }
+        }
+
+        private async void ImgRemoteScreen_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            if (TryGetRemotePoint(e, out int x, out int y))
+            {
+                await _clientService.SendMouseWheelAsync(e.Delta, x, y);
+                e.Handled = true;
+            }
+        }
+
+        private async void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+            int virtualKey = KeyInterop.VirtualKeyFromKey(key);
+
+            if (virtualKey > 0)
+            {
+                await _clientService.SendKeyDownAsync(virtualKey);
+                e.Handled = true;
+            }
+        }
+
+        private async void Window_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (!IsRemoteInputReady())
+                return;
+
+            Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+            int virtualKey = KeyInterop.VirtualKeyFromKey(key);
+
+            if (virtualKey > 0)
+            {
+                await _clientService.SendKeyUpAsync(virtualKey);
+                e.Handled = true;
+            }
+        }
     }
 }

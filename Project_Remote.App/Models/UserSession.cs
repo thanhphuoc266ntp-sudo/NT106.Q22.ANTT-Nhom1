@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace RemoteMate
 {
@@ -11,12 +15,9 @@ namespace RemoteMate
         public static string? IpAddress { get; set; }
         public static string? HostName { get; set; }
 
-        // Lưu access token trong session (nullable)
-        public static string? AccessToken { get; set; }
-
         public static void InitNetworkInfo()
         {
-            HostName = System.Environment.MachineName;
+            HostName = Environment.MachineName;
 
             var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
             IpAddress = host.AddressList
@@ -29,9 +30,8 @@ namespace RemoteMate
             FullName = null;
             Email = null;
             Username = null;
-            IpAddress = null;   
+            IpAddress = null;
             HostName = null;
-            AccessToken = null;
         }
     }
 }

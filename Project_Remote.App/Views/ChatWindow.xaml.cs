@@ -1,138 +1,146 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
+using System.Windows.Controls;
 using RemoteMate.Models;
 using RemoteMate.Services;
+
+using WpfKey = System.Windows.Input.Key;
+using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
+using WpfBrushes = System.Windows.Media.Brushes;
+using WpfColor = System.Windows.Media.Color;
+using WpfSolidColorBrush = System.Windows.Media.SolidColorBrush;
+using WpfHorizontalAlignment = System.Windows.HorizontalAlignment;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RemoteMate.Views
 {
     public partial class ChatWindow : Window
     {
-        private readonly ChatClientService _chatClient = new ChatClientService();
-        private string _remoteIp = string.Empty;
+        private readonly string _remoteIp;
+        private readonly string _remoteName;
+        private readonly ChatClientService _chatClientService;
 
-        public ChatWindow()
+        public ChatWindow(string remoteIp, string remoteName)
         {
             InitializeComponent();
-        }
 
-        public ChatWindow(string remoteIp) : this()
-        {
-            _remoteIp = remoteIp ?? string.Empty;
-            txtRemoteInfo.Text = $"Đang chat với: {_remoteIp}";
-            _chatClient.OnStatusChanged += (s) =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    AppendSystemMessage(s);
-                });
-            };
+            _remoteIp = remoteIp;
+            _remoteName = remoteName;
+            _chatClientService = new ChatClientService();
+
+            txtRemoteInfo.Text = $"Đang chat với: {_remoteName} ({_remoteIp})";
         }
 
         private async void btnSend_Click(object sender, RoutedEventArgs e)
         {
-            await SendMessageFromUiAsync();
+            await SendCurrentMessageAsync();
         }
 
-        private async void txtMessage_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private async void txtMessage_KeyDown(object sender, WpfKeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key == WpfKey.Enter)
             {
                 e.Handled = true;
-                await SendMessageFromUiAsync();
+                await SendCurrentMessageAsync();
             }
         }
 
-        private async Task SendMessageFromUiAsync()
+        private async Task SendCurrentMessageAsync()
         {
-            string message = txtMessage.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrEmpty(_remoteIp))
+            string message = txtMessage.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            if (string.IsNullOrWhiteSpace(_remoteIp))
             {
-                System.Windows.MessageBox.Show("Chưa chọn máy nhận tin nhắn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Chưa chọn thiết bị để chat!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (string.IsNullOrEmpty(message))
-            {
-                System.Windows.MessageBox.Show("Tin nhắn rỗng.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            bool sent = await _chatClientService.SendMessageAsync(_remoteIp, message);
 
-            try
+            if (sent)
             {
-                AppendOwnMessage(message);
+                ChatMessage myMessage = new ChatMessage
+                {
+                    FromIp = UserSession.IpAddress ?? string.Empty,
+                    FromUserName = UserSession.Username ?? "Bạn",
+                    Message = message,
+                    SentAt = DateTime.Now,
+                    IsMine = true
+                };
+
+                AddMessageToUi(myMessage);
                 txtMessage.Clear();
-                await _chatClient.SendMessageAsync(_remoteIp, message);
+                txtMessage.Focus();
             }
-            catch (Exception ex)
+            else
             {
-                AppendSystemMessage($"Lỗi gửi: {ex.Message}");
+                MessageBox.Show(
+                    "Không gửi được tin nhắn. Kiểm tra máy nhận hoặc firewall port 9002.",
+                    "Lỗi gửi tin",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
         }
 
-        public void AppendIncomingMessage(ChatMessage msg)
+        public void AddIncomingMessage(ChatMessage chatMessage)
         {
+            chatMessage.IsMine = false;
+
             Dispatcher.Invoke(() =>
             {
-                var tb = new System.Windows.Controls.TextBlock
-                {
-                    Text = $"{msg.FromUserName}: {msg.Message}",
-                    TextWrapping = System.Windows.TextWrapping.Wrap,
-                    Margin = new Thickness(6),
-                    Background = System.Windows.Media.Brushes.LightBlue,
-                    Padding = new Thickness(8),
-                    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-                    MaxWidth = 300
-                };
-                pnlMessages.Children.Add(tb);
-                ScrollToBottom();
+                AddMessageToUi(chatMessage);
             });
         }
 
-        private void AppendOwnMessage(string text)
+        private void AddMessageToUi(ChatMessage chatMessage)
         {
-            var tb = new System.Windows.Controls.TextBlock
+            Border bubble = new Border
             {
-                Text = $"Bạn: {text}",
-                TextWrapping = System.Windows.TextWrapping.Wrap,
-                Margin = new Thickness(6),
-                Background = System.Windows.Media.Brushes.LightGreen,
-                Padding = new Thickness(8),
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
-                MaxWidth = 300
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 4, 0, 4),
+                MaxWidth = 320,
+                HorizontalAlignment = chatMessage.IsMine
+                    ? WpfHorizontalAlignment.Right
+                    : WpfHorizontalAlignment.Left,
+                Background = chatMessage.IsMine
+                    ? new WpfSolidColorBrush(WpfColor.FromRgb(0, 184, 148))
+                    : new WpfSolidColorBrush(WpfColor.FromRgb(236, 240, 241))
             };
-            pnlMessages.Children.Add(tb);
-            ScrollToBottom();
-        }
 
-        private void AppendSystemMessage(string text)
-        {
-            var tb = new System.Windows.Controls.TextBlock
+            StackPanel stack = new StackPanel();
+
+            TextBlock header = new TextBlock
             {
-                Text = text,
-                TextWrapping = System.Windows.TextWrapping.Wrap,
-                Margin = new Thickness(6),
-                Foreground = System.Windows.Media.Brushes.Gray,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+                Text = chatMessage.IsMine
+                    ? $"Bạn • {chatMessage.SentAt:HH:mm}"
+                    : $"{chatMessage.FromUserName} • {chatMessage.SentAt:HH:mm}",
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                Foreground = chatMessage.IsMine ? WpfBrushes.White : WpfBrushes.DimGray,
+                Margin = new Thickness(0, 0, 0, 4)
             };
-            pnlMessages.Children.Add(tb);
-            ScrollToBottom();
-        }
 
-        private void ScrollToBottom()
-        {
-            try
+            TextBlock body = new TextBlock
             {
-                scrollMessages.ScrollToEnd();
-            }
-            catch { }
-        }
+                Text = chatMessage.Message,
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 14,
+                Foreground = chatMessage.IsMine ? WpfBrushes.White : WpfBrushes.Black
+            };
 
-        public void SetRemote(string remoteIp)
-        {
-            _remoteIp = remoteIp ?? string.Empty;
-            txtRemoteInfo.Text = $"Đang chat với: {_remoteIp}";
+            stack.Children.Add(header);
+            stack.Children.Add(body);
+
+            bubble.Child = stack;
+            pnlMessages.Children.Add(bubble);
+
+            scrollMessages.ScrollToEnd();
         }
     }
 }

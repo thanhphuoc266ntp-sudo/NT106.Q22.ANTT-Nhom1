@@ -1,98 +1,119 @@
-﻿using RemoteMate.Models;
-using System;
+﻿using RemoteMate;
+using RemoteMate.Models;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+using System.Net.NetworkInformation;
 
-namespace RemoteMate.Services
+public class NetworkService
 {
-    public class NetworkService
+    private UdpClient udp;
+    private bool _running;
+
+    public event Action<ClientInfo> OnClientFound;
+
+    public void StartDiscovery()
     {
-        private UdpClient udp;
-        private bool _running;
+        _running = true;
 
-        public event Action<ClientInfo> OnClientFound;
+        udp = new UdpClient();
+        udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        udp.Client.Bind(new IPEndPoint(IPAddress.Any, 8888));
+        udp.EnableBroadcast = true;
 
-        public void StartDiscovery()
+        Task.Run(Listen);
+        Task.Run(Broadcast);
+    }
+
+    public void Stop()
+    {
+        _running = false;
+        udp?.Close();
+    }
+
+    private async Task Broadcast()
+    {
+        using var sender = new UdpClient();
+        sender.EnableBroadcast = true;
+
+        while (_running)
         {
             try
             {
-                _running = true;
+                string msg = UserSession.HostName ?? "Unknown";
+                byte[] data = Encoding.UTF8.GetBytes(msg);
 
-                // NÂNG CẤP 1: Cho phép nhiều app dùng chung Port 8888 (rất tiện để test local)
-                udp = new UdpClient();
-                udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                udp.Client.Bind(new IPEndPoint(IPAddress.Any, 8888));
-                udp.EnableBroadcast = true;
+                foreach (var broadcastIp in GetBroadcastAddresses())
+                {
+                    await sender.SendAsync(
+                        data,
+                        data.Length,
+                        new IPEndPoint(broadcastIp, 8888)
+                    );
+                }
 
-                Task.Run(Listen);
-                Task.Run(Broadcast);
+                await Task.Delay(2000);
             }
-            catch (Exception ex)
+            catch { }
+        }
+    }
+
+    private List<IPAddress> GetBroadcastAddresses()
+    {
+        var result = new List<IPAddress>();
+
+        foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (ni.OperationalStatus != OperationalStatus.Up)
+                continue;
+
+            var props = ni.GetIPProperties();
+
+            foreach (var ua in props.UnicastAddresses)
             {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khởi tạo UDP: {ex.Message}");
+                if (ua.Address.AddressFamily != AddressFamily.InterNetwork)
+                    continue;
+
+                if (ua.IPv4Mask == null)
+                    continue;
+
+                byte[] ipBytes = ua.Address.GetAddressBytes();
+                byte[] maskBytes = ua.IPv4Mask.GetAddressBytes();
+                byte[] broadcastBytes = new byte[4];
+
+                for (int i = 0; i < 4; i++)
+                {
+                    broadcastBytes[i] = (byte)(ipBytes[i] | ~maskBytes[i]);
+                }
+
+                result.Add(new IPAddress(broadcastBytes));
             }
         }
 
-        public void Stop()
-        {
-            _running = false;
-            udp?.Close();
-        }
+        result.Add(IPAddress.Broadcast);
+        return result.Distinct().ToList();
+    }
 
-        private async Task Broadcast()
+    private async Task Listen()
+    {
+        while (_running)
         {
-            using var sender = new UdpClient();
-            sender.EnableBroadcast = true;
-
-            while (_running)
+            try
             {
-                try
+                var result = await udp.ReceiveAsync();
+
+                var client = new ClientInfo
                 {
-                    // NÂNG CẤP 2: Dùng Environment.MachineName làm định danh để chống tự soi gương
-                    string msg = Environment.MachineName;
-                    byte[] data = Encoding.UTF8.GetBytes(msg);
+                    Ip = result.RemoteEndPoint.Address.ToString(),
+                    HostName = Encoding.UTF8.GetString(result.Buffer),
+                    LastSeen = DateTime.Now
+                };
 
-                    await sender.SendAsync(data, data.Length, new IPEndPoint(IPAddress.Broadcast, 8888));
-
-                    await Task.Delay(2000);
-                }
-                catch { }
+                OnClientFound?.Invoke(client);
             }
-        }
-
-        private async Task Listen()
-        {
-            while (_running)
+            catch
             {
-                try
-                {
-                    var result = await udp.ReceiveAsync();
-
-                    string remoteIp = result.RemoteEndPoint.Address.ToString();
-                    string receivedHostName = Encoding.UTF8.GetString(result.Buffer);
-
-                    // NÂNG CẤP 3: LỌC BỎ CHÍNH MÌNH (Chặn hiện tượng Loopback)
-                    // Nếu tên máy nhận được giống hệt tên máy mình, lập tức ngó lơ!
-                    if (receivedHostName == Environment.MachineName || remoteIp == "127.0.0.1")
-                    {
-                        continue;
-                    }
-
-                    var client = new ClientInfo
-                    {
-                        Ip = remoteIp,
-                        HostName = receivedHostName,
-                        LastSeen = DateTime.Now
-                    };
-
-                    OnClientFound?.Invoke(client);
-                }
-                catch
-                {
-                    break;
-                }
+                break;
             }
         }
     }
