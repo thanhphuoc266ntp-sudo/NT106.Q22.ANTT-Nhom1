@@ -146,7 +146,7 @@ namespace RemoteMate
             }
             catch
             {
-          
+
             }
         }
 
@@ -185,7 +185,7 @@ namespace RemoteMate
             }
             catch
             {
-               
+
             }
         }
 
@@ -569,7 +569,56 @@ namespace RemoteMate
                 _chatWindow.Activate();
             }
         }
-        private void BtnScreenshot_Click(object sender, RoutedEventArgs e) { }
+        private void BtnScreenshot_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (imgRemoteScreen.Source is not BitmapSource bitmap)
+                {
+                    MessageBox.Show(
+                        "Chưa có màn hình remote để chụp!",
+                        "Thông báo",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+
+                string downloadsFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Downloads"
+                );
+
+                Directory.CreateDirectory(downloadsFolder);
+
+                string fileName = $"RemoteMate_Screenshot_{DateTime.Now:yyyyMMdd_HHmmssfff}.png";
+                string filePath = Path.Combine(downloadsFolder, fileName);
+
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+                using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    encoder.Save(fs);
+                }
+
+                MessageBox.Show(
+                    $"Đã lưu ảnh chụp màn hình vào:\n{filePath}",
+                    "Chụp ảnh thành công",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Lỗi khi chụp ảnh màn hình: " + ex.Message,
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
+        }
         private void BtnLockScreen_Click(object sender, RoutedEventArgs e) { }
         private void BtnShutdown_Click(object sender, RoutedEventArgs e) { }
         private bool IsRemoteInputReady()
