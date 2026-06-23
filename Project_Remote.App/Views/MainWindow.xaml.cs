@@ -11,6 +11,8 @@ using MouseWheelEventArgs = System.Windows.Input.MouseWheelEventArgs;
 using RemoteMate.Services;
 using RemoteMate.Views;
 using RemoteMate.Models;
+using System.Net.NetworkInformation;
+using System.Windows.Threading;
 
 namespace RemoteMate
 {
@@ -24,6 +26,9 @@ namespace RemoteMate
         private ChatServerService _chatServerService;
         private ChatWindow _chatWindow;
         private DateTime _lastMouseMoveSent = DateTime.MinValue;
+        private int _receivedFrameCount = 0;
+        private DispatcherTimer _performanceTimer;
+        private bool _isMeasuringLatency = false;
         private SessionHistoryService _sessionHistoryService = new SessionHistoryService();
         private DateTime? _currentControllerSessionStart;
         private string _currentControllerRemoteUsername = string.Empty;
@@ -40,6 +45,7 @@ namespace RemoteMate
             StartServer();
             StartChatServer();
             StartNetworkDiscovery();
+            StartPerformanceMonitor();
 
             _ = LoadRecentSessionHistoryAsync();
         }
@@ -109,6 +115,59 @@ namespace RemoteMate
                     lstHistory.Items.Clear();
                     lstHistory.Items.Add("Không tải được lịch sử phiên");
                 });
+            }
+        }
+
+        private void StartPerformanceMonitor()
+        {
+            _performanceTimer = new DispatcherTimer();
+            _performanceTimer.Interval = TimeSpan.FromSeconds(1);
+
+            _performanceTimer.Tick += (s, e) =>
+            {
+                int fps = System.Threading.Interlocked.Exchange(ref _receivedFrameCount, 0);
+                txtFps.Text = fps.ToString();
+
+                if (_clientService == null ||
+                    btnControlMode.IsChecked != true ||
+                    string.IsNullOrWhiteSpace(_remoteIp))
+                {
+                    txtLatency.Text = "-- ms";
+                }
+            };
+
+            _performanceTimer.Start();
+        }
+
+        private async Task UpdateLatencyAsync()
+        {
+            if (_isMeasuringLatency)
+                return;
+
+            _isMeasuringLatency = true;
+
+            try
+            {
+                using Ping ping = new Ping();
+
+                PingReply reply = await ping.SendPingAsync(_remoteIp, 1000);
+
+                if (reply.Status == IPStatus.Success)
+                {
+                    txtLatency.Text = $"{reply.RoundtripTime} ms";
+                }
+                else
+                {
+                    txtLatency.Text = "-- ms";
+                }
+            }
+            catch
+            {
+                txtLatency.Text = "-- ms";
+            }
+            finally
+            {
+                _isMeasuringLatency = false;
             }
         }
 
@@ -455,8 +514,11 @@ namespace RemoteMate
 
             _clientService = new TcpClientService();
 
-            _clientService.OnScreenReceived += (imageData) =>
+            _clientService.OnScreenReceived += (imageData, frameStartTime) =>
             {
+                System.Threading.Interlocked.Increment(ref _receivedFrameCount);
+                System.Threading.Interlocked.Increment(ref _receivedFrameCount);
+
                 Dispatcher.Invoke(() =>
                 {
                     try
@@ -473,6 +535,9 @@ namespace RemoteMate
                             imgRemoteScreen.Stretch = System.Windows.Media.Stretch.Uniform;
                             imgRemoteScreen.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
                             imgRemoteScreen.VerticalAlignment = System.Windows.VerticalAlignment.Stretch;
+                            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                            long frameDelay = Math.Max(0, now - frameStartTime);
+                            txtLatency.Text = $"{frameDelay} ms";
                         }
                         imgRemoteScreen.Visibility = Visibility.Visible;
                         pnlPlaceholder.Visibility = Visibility.Collapsed;
@@ -507,6 +572,8 @@ namespace RemoteMate
                     btnControlMode.IsChecked = false;
                     imgRemoteScreen.Visibility = Visibility.Collapsed;
                     pnlPlaceholder.Visibility = Visibility.Visible;
+                    txtFps.Text = "0";
+                    txtLatency.Text = "-- ms";
                 });
             };
 

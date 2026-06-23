@@ -172,9 +172,9 @@
                 <DockPanel>
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                         <TextBlock Text="FPS: " Foreground="#7f8c8d" FontSize="11"/>
-                        <TextBlock Name="txtFPS" Text="0" Foreground="#00d2d3" FontWeight="Bold" FontSize="11" Margin="0,0,20,0"/>
-                        <TextBlock Text="Latency: " Foreground="#7f8c8d" FontSize="11"/>
-                        <TextBlock Name="txtLatency" Text="0 ms" Foreground="#00d2d3" FontWeight="Bold" FontSize="11"/>
+                        <TextBlock Name="txtFps" Text="0" Foreground="#00d2d3" FontWeight="Bold" FontSize="11" Margin="0,0,20,0"/>
+                        <TextBlock Text="Frame Delay: " Foreground="#7f8c8d" FontSize="11"/>
+                        <TextBlock Name="txtLatency" Text="-- ms" Foreground="#00d2d3" FontWeight="Bold" FontSize="11"/>
                     </StackPanel>
                     <TextBlock Text="RemoteMate v1.0" Foreground="#95a5a6" FontSize="11" HorizontalAlignment="Right"/>
                 </DockPanel>

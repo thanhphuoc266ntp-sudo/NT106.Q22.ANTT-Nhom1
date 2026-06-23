@@ -13,7 +13,7 @@ namespace RemoteMate.Services
 
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-        public event Action<byte[]> OnScreenReceived;
+        public event Action<byte[], long> OnScreenReceived;
         public event Action<string> OnStatusChanged;
         public event Action OnDisconnected;
 
@@ -99,8 +99,14 @@ namespace RemoteMate.Services
             {
                 while (_isConnected && _client.Connected)
                 {
+                    byte[] timeBuf = new byte[8];
+                    bool ok = await ReadExact(timeBuf, 8);
+                    if (!ok) break;
+
+                    long frameStartTime = BitConverter.ToInt64(timeBuf, 0);
+
                     byte[] lenBuf = new byte[4];
-                    bool ok = await ReadExact(lenBuf, 4);
+                    ok = await ReadExact(lenBuf, 4);
                     if (!ok) break;
 
                     int size = BitConverter.ToInt32(lenBuf, 0);
@@ -112,7 +118,7 @@ namespace RemoteMate.Services
                     ok = await ReadExact(img, size);
                     if (!ok) break;
 
-                    OnScreenReceived?.Invoke(img);
+                    OnScreenReceived?.Invoke(img, frameStartTime);
                 }
             }
             catch { }

@@ -119,16 +119,25 @@ namespace RemoteMate.Services
                     {
                         try
                         {
-                            var start = DateTime.Now;
-                            byte[] img = capture.CaptureScreen(70);
-                            byte[] len = BitConverter.GetBytes(img.Length);
+                            DateTime loopStart = DateTime.Now;
 
-                            await stream.WriteAsync(len.AsMemory(0, 4), token);
+                            long frameStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                            byte[] img = capture.CaptureScreen(70);
+
+                            byte[] timeBytes = BitConverter.GetBytes(frameStartTime);
+                            byte[] lenBytes = BitConverter.GetBytes(img.Length);
+
+                            await stream.WriteAsync(timeBytes.AsMemory(0, 8), token);
+                            await stream.WriteAsync(lenBytes.AsMemory(0, 4), token);
                             await stream.WriteAsync(img.AsMemory(0, img.Length), token);
 
-                            int delay = 33 - (int)(DateTime.Now - start).TotalMilliseconds;
+                            int delay = 33 - (int)(DateTime.Now - loopStart).TotalMilliseconds;
+
                             if (delay > 0)
+                            {
                                 await Task.Delay(delay, token);
+                            }
                         }
                         catch (OperationCanceledException)
                         {
