@@ -50,6 +50,11 @@ namespace RemoteMate
         private System.Windows.Point _maximizeDragStartPoint;
         private double _maximizeButtonStartLeft;
         private double _maximizeButtonStartTop;
+        private ClipboardServerService _clipboardServerService;
+        private ClipboardClientService _clipboardClientService;
+        private ClipboardSyncService _clipboardSyncService;
+        private bool _clipboardSyncEnabled = true;
+        private bool _clipboardSessionActive = false;
 
         public MainWindow()
         {
@@ -62,6 +67,8 @@ namespace RemoteMate
             StartNetworkDiscovery();
             StartPerformanceMonitor();
             StartAudioServer();
+            StartClipboardServer();
+            InitClipboardSync();
 
             _ = LoadRecentSessionHistoryAsync();
         }
@@ -170,8 +177,99 @@ namespace RemoteMate
             }
             catch
             {
-                
+
             }
+        }
+
+        private void StartClipboardServer()
+        {
+            try
+            {
+                _clipboardServerService = new ClipboardServerService();
+
+                _clipboardServerService.OnClipboardTextReceived += (text) =>
+                {
+                    if (!_clipboardSyncEnabled || !_clipboardSessionActive)
+                        return;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        _clipboardSyncService?.ApplyRemoteText(text);
+                    });
+                };
+
+                _clipboardServerService.OnClipboardImageReceived += (pngData) =>
+                {
+                    if (!_clipboardSyncEnabled || !_clipboardSessionActive)
+                        return;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        _clipboardSyncService?.ApplyRemoteImage(pngData);
+                    });
+                };
+
+                _clipboardServerService.Start();
+            }
+            catch
+            {
+            }
+        }
+
+        private void InitClipboardSync()
+        {
+            _clipboardSyncService = new ClipboardSyncService();
+
+            _clipboardSyncService.OnLocalTextChanged += (text) =>
+            {
+                if (!_clipboardSyncEnabled || !_clipboardSessionActive)
+                    return;
+
+                _ = _clipboardClientService?.SendTextAsync(text);
+            };
+
+            _clipboardSyncService.OnLocalImageChanged += (pngData) =>
+            {
+                if (!_clipboardSyncEnabled || !_clipboardSessionActive)
+                    return;
+
+                _ = _clipboardClientService?.SendImageAsync(pngData);
+            };
+        }
+
+        private async Task StartClipboardSessionAsync(string remoteIp)
+        {
+            try
+            {
+                if (!_clipboardSyncEnabled)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(remoteIp))
+                    return;
+
+                _clipboardSessionActive = true;
+
+                _clipboardClientService?.Disconnect();
+                _clipboardClientService = new ClipboardClientService();
+
+                bool ok = await _clipboardClientService.ConnectAsync(remoteIp);
+
+                if (ok)
+                {
+                    _clipboardSyncService?.Start();
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void StopClipboardSession()
+        {
+            _clipboardSessionActive = false;
+
+            try { _clipboardSyncService?.Stop(); } catch { }
+            try { _clipboardClientService?.Disconnect(); } catch { }
         }
 
         private async Task StartRemoteAudioAsync()
@@ -182,6 +280,7 @@ namespace RemoteMate
                     return;
 
                 _audioClientService?.Disconnect();
+                StopClipboardSession();
 
                 _audioClientService = new AudioClientService();
 
@@ -189,7 +288,7 @@ namespace RemoteMate
             }
             catch
             {
-                
+
             }
         }
         private void LoadUserInfo()
@@ -435,6 +534,8 @@ namespace RemoteMate
             {
                 _currentReceiverSessionStart = DateTime.Now;
                 _currentReceiverRequest = req;
+
+                _ = StartClipboardSessionAsync(req.FromIp);
             };
 
             _serverService.OnSessionRejected += (req) =>
@@ -448,6 +549,8 @@ namespace RemoteMate
 
             _serverService.OnSessionEnded += (req) =>
             {
+                StopClipboardSession();
+
                 _ = SaveReceiverSessionAsync(
                     req,
                     "Completed",
@@ -542,6 +645,8 @@ namespace RemoteMate
 
             if (result == MessageBoxResult.Yes)
             {
+                _clipboardServerService?.Stop();
+
                 _audioClientService?.Disconnect();
                 _audioServerService?.Stop();
 
@@ -787,7 +892,9 @@ namespace RemoteMate
             if (connected)
             {
                 _currentControllerSessionStart = DateTime.Now;
+
                 await StartRemoteAudioAsync();
+                await StartClipboardSessionAsync(_remoteIp);
             }
             else
             {
@@ -801,11 +908,13 @@ namespace RemoteMate
 
         private void BtnControlMode_Unchecked(object sender, RoutedEventArgs e)
         {
+            StopClipboardSession();
             _clientService?.Disconnect();
         }
 
         private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
         {
+            StopClipboardSession();
             _clientService?.Disconnect();
             btnControlMode.IsChecked = false;
         }
