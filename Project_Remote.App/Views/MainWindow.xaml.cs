@@ -35,6 +35,21 @@ namespace RemoteMate
         private string _currentControllerRemoteHostName = string.Empty;
         private DateTime? _currentReceiverSessionStart;
         private ControlRequest _currentReceiverRequest;
+        private AudioServerService _audioServerService;
+        private AudioClientService _audioClientService;
+        private WindowStyle _normalWindowStyle;
+        private ResizeMode _normalResizeMode;
+        private WindowState _normalWindowState;
+        private bool _normalTopmost;
+        private double _normalLeft;
+        private double _normalTop;
+        private double _normalWidth;
+        private double _normalHeight;
+        private bool _isDraggingMaximizeButton = false;
+        private bool _suppressMaximizeClick = false;
+        private System.Windows.Point _maximizeDragStartPoint;
+        private double _maximizeButtonStartLeft;
+        private double _maximizeButtonStartTop;
 
         public MainWindow()
         {
@@ -46,8 +61,80 @@ namespace RemoteMate
             StartChatServer();
             StartNetworkDiscovery();
             StartPerformanceMonitor();
+            StartAudioServer();
 
             _ = LoadRecentSessionHistoryAsync();
+        }
+
+        private void btnMaximize_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _isDraggingMaximizeButton = true;
+            _suppressMaximizeClick = false;
+
+            _maximizeDragStartPoint = e.GetPosition(canvasOverlay);
+            _maximizeButtonStartLeft = Canvas.GetLeft(btnMaximize);
+            _maximizeButtonStartTop = Canvas.GetTop(btnMaximize);
+
+            if (double.IsNaN(_maximizeButtonStartLeft))
+                _maximizeButtonStartLeft = 0;
+
+            if (double.IsNaN(_maximizeButtonStartTop))
+                _maximizeButtonStartTop = 0;
+
+            btnMaximize.CaptureMouse();
+        }
+
+        private void btnMaximize_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isDraggingMaximizeButton || !btnMaximize.IsMouseCaptured)
+                return;
+
+            System.Windows.Point currentPoint = e.GetPosition(canvasOverlay);
+
+            double offsetX = currentPoint.X - _maximizeDragStartPoint.X;
+            double offsetY = currentPoint.Y - _maximizeDragStartPoint.Y;
+
+            double newLeft = _maximizeButtonStartLeft + offsetX;
+            double newTop = _maximizeButtonStartTop + offsetY;
+
+            double maxLeft = Math.Max(0, canvasOverlay.ActualWidth - btnMaximize.ActualWidth);
+            double maxTop = Math.Max(0, canvasOverlay.ActualHeight - btnMaximize.ActualHeight);
+
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft > maxLeft) newLeft = maxLeft;
+            if (newTop > maxTop) newTop = maxTop;
+
+            Canvas.SetLeft(btnMaximize, newLeft);
+            Canvas.SetTop(btnMaximize, newTop);
+
+            if (Math.Abs(offsetX) > 3 || Math.Abs(offsetY) > 3)
+                _suppressMaximizeClick = true;
+
+            e.Handled = true;
+        }
+
+        private void btnMaximize_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            bool wasDragging = _suppressMaximizeClick;
+
+            _isDraggingMaximizeButton = false;
+
+            if (btnMaximize.IsMouseCaptured)
+                btnMaximize.ReleaseMouseCapture();
+
+            if (!wasDragging)
+            {
+                ToggleRemoteFullscreen();
+            }
+
+            _suppressMaximizeClick = false;
+            e.Handled = true;
+        }
+
+        private void canvasOverlay_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ClampMaximizeButtonInsideCanvas();
         }
 
         private void StartChatServer()
@@ -74,6 +161,37 @@ namespace RemoteMate
             _chatServerService.Start();
         }
 
+        private void StartAudioServer()
+        {
+            try
+            {
+                _audioServerService = new AudioServerService();
+                _audioServerService.Start();
+            }
+            catch
+            {
+                
+            }
+        }
+
+        private async Task StartRemoteAudioAsync()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_remoteIp))
+                    return;
+
+                _audioClientService?.Disconnect();
+
+                _audioClientService = new AudioClientService();
+
+                await _audioClientService.ConnectAsync(_remoteIp);
+            }
+            catch
+            {
+                
+            }
+        }
         private void LoadUserInfo()
         {
             if (!string.IsNullOrEmpty(UserSession.FullName))
@@ -424,6 +542,9 @@ namespace RemoteMate
 
             if (result == MessageBoxResult.Yes)
             {
+                _audioClientService?.Disconnect();
+                _audioServerService?.Stop();
+
                 _clientService?.Disconnect();
                 _serverService?.Stop();
                 _chatServerService?.Stop();
@@ -440,6 +561,7 @@ namespace RemoteMate
         private void borderScreenArea_MouseEnter(object sender, MouseEventArgs e)
         {
             btnMaximize.Visibility = Visibility.Visible;
+            ClampMaximizeButtonInsideCanvas();
         }
 
         private void borderScreenArea_MouseLeave(object sender, MouseEventArgs e)
@@ -447,34 +569,116 @@ namespace RemoteMate
             btnMaximize.Visibility = Visibility.Collapsed;
         }
 
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
+        private void ToggleRemoteFullscreen()
         {
-            if (!_isMaximizedMode)
-            {
-                colSidebar.Width = new GridLength(0);
-                rowHeader.Height = new GridLength(0);
-                rowToolbar.Height = new GridLength(0);
-                rowFooter.Height = new GridLength(0);
-
-                borderScreenArea.Margin = new Thickness(0);
-                borderScreenArea.CornerRadius = new CornerRadius(0);
-                borderScreenArea.BorderThickness = new Thickness(0);
-
-                _isMaximizedMode = true;
-            }
+            if (_isMaximizedMode)
+                ExitRemoteFullscreen();
             else
+                EnterRemoteFullscreen();
+        }
+
+        private void EnterRemoteFullscreen()
+        {
+            _normalWindowStyle = WindowStyle;
+            _normalResizeMode = ResizeMode;
+            _normalWindowState = WindowState;
+            _normalTopmost = Topmost;
+            _normalLeft = Left;
+            _normalTop = Top;
+            _normalWidth = Width;
+            _normalHeight = Height;
+
+            WindowState = WindowState.Normal;
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            Topmost = true;
+
+            Left = 0;
+            Top = 0;
+            Width = SystemParameters.PrimaryScreenWidth;
+            Height = SystemParameters.PrimaryScreenHeight;
+
+            colSidebar.Width = new GridLength(0);
+            rowHeader.Height = new GridLength(0);
+            rowToolbar.Height = new GridLength(0);
+            rowFooter.Height = new GridLength(0);
+
+            borderScreenArea.Margin = new Thickness(0);
+            borderScreenArea.CornerRadius = new CornerRadius(0);
+            borderScreenArea.BorderThickness = new Thickness(0);
+
+            imgRemoteScreen.Stretch = System.Windows.Media.Stretch.Uniform;
+            imgRemoteScreen.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
+            imgRemoteScreen.VerticalAlignment = VerticalAlignment.Stretch;
+
+            _isMaximizedMode = true;
+
+            ClampMaximizeButtonInsideCanvas();
+
+            Focus();
+            imgRemoteScreen.Focus();
+        }
+
+        private void ExitRemoteFullscreen()
+        {
+            WindowStyle = _normalWindowStyle;
+            ResizeMode = _normalResizeMode;
+            Topmost = _normalTopmost;
+
+            WindowState = WindowState.Normal;
+            Left = _normalLeft;
+            Top = _normalTop;
+            Width = _normalWidth;
+            Height = _normalHeight;
+            WindowState = _normalWindowState;
+
+            colSidebar.Width = new GridLength(320);
+            rowHeader.Height = GridLength.Auto;
+            rowToolbar.Height = GridLength.Auto;
+            rowFooter.Height = GridLength.Auto;
+
+            borderScreenArea.Margin = new Thickness(20, 10, 20, 10);
+            borderScreenArea.CornerRadius = new CornerRadius(15);
+            borderScreenArea.BorderThickness = new Thickness(1);
+
+            _isMaximizedMode = false;
+
+            ClampMaximizeButtonInsideCanvas();
+        }
+
+        private void ClampMaximizeButtonInsideCanvas()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                colSidebar.Width = new GridLength(320);
-                rowHeader.Height = GridLength.Auto;
-                rowToolbar.Height = GridLength.Auto;
-                rowFooter.Height = GridLength.Auto;
+                double canvasWidth = canvasOverlay.ActualWidth;
+                double canvasHeight = canvasOverlay.ActualHeight;
 
-                borderScreenArea.Margin = new Thickness(20, 10, 20, 10);
-                borderScreenArea.CornerRadius = new CornerRadius(15);
-                borderScreenArea.BorderThickness = new Thickness(1);
+                if (canvasWidth <= 0 || canvasHeight <= 0)
+                    return;
 
-                _isMaximizedMode = false;
-            }
+                double buttonWidth = btnMaximize.ActualWidth > 0 ? btnMaximize.ActualWidth : btnMaximize.Width;
+                double buttonHeight = btnMaximize.ActualHeight > 0 ? btnMaximize.ActualHeight : btnMaximize.Height;
+
+                double padding = 8;
+
+                double left = Canvas.GetLeft(btnMaximize);
+                double top = Canvas.GetTop(btnMaximize);
+
+                if (double.IsNaN(left))
+                    left = canvasWidth - buttonWidth - padding;
+
+                if (double.IsNaN(top))
+                    top = padding;
+
+                double maxLeft = Math.Max(padding, canvasWidth - buttonWidth - padding);
+                double maxTop = Math.Max(padding, canvasHeight - buttonHeight - padding);
+
+                left = Math.Clamp(left, padding, maxLeft);
+                top = Math.Clamp(top, padding, maxTop);
+
+                Canvas.SetLeft(btnMaximize, left);
+                Canvas.SetTop(btnMaximize, top);
+            }), DispatcherPriority.Loaded);
         }
 
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)
@@ -561,6 +765,7 @@ namespace RemoteMate
 
             _clientService.OnDisconnected += () =>
             {
+                _audioClientService?.Disconnect();
                 _ = SaveControllerSessionAsync("Completed", "Người dùng ngắt kết nối");
 
                 Dispatcher.Invoke(() =>
@@ -582,6 +787,7 @@ namespace RemoteMate
             if (connected)
             {
                 _currentControllerSessionStart = DateTime.Now;
+                await StartRemoteAudioAsync();
             }
             else
             {
@@ -805,6 +1011,13 @@ namespace RemoteMate
 
         private async void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (_isMaximizedMode && e.Key == Key.Escape)
+            {
+                ExitRemoteFullscreen();
+                e.Handled = true;
+                return;
+            }
+
             if (!IsRemoteInputReady())
                 return;
 

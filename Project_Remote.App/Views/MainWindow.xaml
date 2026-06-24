@@ -51,13 +51,13 @@
                    VerticalAlignment="Center"/>
 
                         <Button Name="btnLogout" Grid.Row="0" Grid.Column="2" 
-                Content="🚪 Đăng xuất" VerticalAlignment="Center" 
-                Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
-                FontSize="13" Cursor="Hand" Click="BtnLogout_Click"/>
+                            Content="🚪 Đăng xuất" VerticalAlignment="Center" 
+                            Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
+                            FontSize="13" Cursor="Hand" Click="BtnLogout_Click"/>
 
                         <TextBlock x:Name="txtProfileEmail" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                   Text="" Foreground="#95a5a6" FontSize="13" Margin="0,2,0,0"
-                   TextWrapping="NoWrap" TextTrimming="None"/>
+                           Text="" Foreground="#95a5a6" FontSize="13" Margin="0,2,0,0"
+                           TextWrapping="NoWrap" TextTrimming="None"/>
                     </Grid>
                 </Border>
 
@@ -70,21 +70,21 @@
                     <ListBox Name="lstClients" Background="#2c3e50" BorderThickness="0" Height="230" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto" MouseDoubleClick="lstClients_MouseDoubleClick"/>
 
                     <TextBlock Text="📋 LỊCH SỬ PHIÊN GẦN ĐÂY"
-           Foreground="#bdc3c7"
-           FontSize="12"
-           Margin="0,20,0,8"/>
+                           Foreground="#bdc3c7"
+                           FontSize="12"
+                           Margin="0,20,0,8"/>
 
                     <Border Background="#2c3e50"
-        CornerRadius="0"
-        Padding="8"
-        Height="220">
+                            CornerRadius="0"
+                            Padding="8"
+                            Height="220">
 
                         <ListBox Name="lstHistory"
-             Background="Transparent"
-             BorderThickness="0"
-             Foreground="#dfe6e9"
-             FontSize="10"
-             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="#dfe6e9"
+                                 FontSize="10"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
 
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
@@ -136,35 +136,97 @@
                 </UniformGrid>
             </Border>
 
-            <Border Grid.Row="2" x:Name="borderScreenArea" Margin="20,10" Background="#2d3436" CornerRadius="15" BorderBrush="#38bdf8" BorderThickness="1"
-                    MouseEnter="borderScreenArea_MouseEnter" MouseLeave="borderScreenArea_MouseLeave">
-                <Grid>
-                    <Button x:Name="btnMaximize" Content="❐" Visibility="Collapsed"
-                            HorizontalAlignment="Right" VerticalAlignment="Top" 
-                            Margin="15" Width="35" Height="35" 
-                            Background="#33FFFFFF" Foreground="White" FontSize="20" FontWeight="Bold" 
-                            BorderThickness="0" Cursor="Hand" Panel.ZIndex="10" Click="btnMaximize_Click">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="17"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+            <Border Grid.Row="2"
+                x:Name="borderScreenArea"
+                Margin="20,10,20,10"
+                Background="#2d3436"
+                CornerRadius="15"
+                BorderBrush="#38bdf8"
+                BorderThickness="1"
+                MouseEnter="borderScreenArea_MouseEnter"
+                MouseLeave="borderScreenArea_MouseLeave">
 
-                    <ScrollViewer Name="scrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <Image Name="imgRemoteScreen" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Focusable="True"
-                               MouseMove="ImgRemoteScreen_MouseMove"
-                               MouseDown="ImgRemoteScreen_MouseDown"
-                               MouseUp="ImgRemoteScreen_MouseUp"
-                               MouseWheel="ImgRemoteScreen_MouseWheel"
-                               Visibility="Collapsed"/>
-                    </ScrollViewer>
+                <Grid ClipToBounds="True">
 
-                    <StackPanel Name="pnlPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="🖥️" FontSize="60" Foreground="#576574" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Chọn một thiết bị và nhấn 'ĐIỀU KHIỂN'" Foreground="#95a5a6" FontSize="15" Margin="0,15,0,0" FontWeight="Bold"/>
+                    <Grid Panel.ZIndex="0"
+                          ClipToBounds="True"
+                          Background="#2d3436">
+
+                        <Image Name="imgRemoteScreen"
+                   Stretch="Uniform"
+                   StretchDirection="Both"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   Focusable="True"
+                   MouseMove="ImgRemoteScreen_MouseMove"
+                   MouseDown="ImgRemoteScreen_MouseDown"
+                   MouseUp="ImgRemoteScreen_MouseUp"
+                   MouseWheel="ImgRemoteScreen_MouseWheel"
+                   Visibility="Collapsed"/>
+                    </Grid>
+
+                    <StackPanel Name="pnlPlaceholder"
+                    Panel.ZIndex="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                        <TextBlock Text="🖥️"
+                       FontSize="60"
+                       Foreground="#576574"
+                       HorizontalAlignment="Center"/>
+                        <TextBlock Text="Chọn một thiết bị và nhấn 'ĐIỀU KHIỂN'"
+                       Foreground="#95a5a6"
+                       FontSize="15"
+                       Margin="0,15,0,0"
+                       FontWeight="Bold"/>
                     </StackPanel>
+
+                    <Canvas x:Name="canvasOverlay"
+                        Panel.ZIndex="99"
+                        SizeChanged="canvasOverlay_SizeChanged">
+                        <Button x:Name="btnMaximize"
+                            Content="⛶"
+                            Width="42"
+                            Height="42"
+                            Canvas.Left="720"
+                            Canvas.Top="12"
+                            FontSize="22"
+                            FontWeight="Bold"
+                            Foreground="#B6FF00"
+                            Background="#CC000000"
+                            BorderBrush="#B6FF00"
+                            BorderThickness="2"
+                            Cursor="SizeAll"
+                            Visibility="Collapsed"
+                            PreviewMouseLeftButtonDown="btnMaximize_PreviewMouseLeftButtonDown"
+                            PreviewMouseMove="btnMaximize_PreviewMouseMove"
+                            PreviewMouseLeftButtonUp="btnMaximize_PreviewMouseLeftButtonUp"
+                            ToolTip="Phóng to / Thu nhỏ màn hình">          
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="21">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#B6FF00"/>
+                                            <Setter Property="Foreground" Value="#111111"/>
+                                        </Trigger>
+
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#7CFC00"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Canvas>
+
                 </Grid>
             </Border>
 
