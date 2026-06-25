@@ -64,7 +64,10 @@ namespace RemoteMate.Models
                     _ => Status
                 };
 
-                return $"{StartTime:HH:mm} - {roleText} {remote} • {statusText}";
+                if (EndTime.HasValue && DurationSeconds > 0)
+                    return $"{StartTime:HH:mm} - {EndTime.Value:HH:mm} • {roleText} {remote} • {statusText} • {DurationText}";
+
+                return $"{StartTime:HH:mm} • {roleText} {remote} • {statusText}";
             }
         }
 

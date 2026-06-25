@@ -92,6 +92,7 @@ namespace RemoteMate.Services
                     OnStatusChanged?.Invoke($"Accepted: {req.UserName}");
 
                     var inputService = new RemoteInputService();
+                    int currentQuality = Math.Clamp(AppSettingsService.Current.ScreenQuality, 10, 100);
 
                     _ = Task.Run(async () =>
                     {
@@ -104,6 +105,24 @@ namespace RemoteMate.Services
                                 if (command == null)
                                     break;
 
+                                if (command.StartsWith("SET_QUALITY|"))
+                                {
+                                    string value = command.Substring("SET_QUALITY|".Length);
+
+                                    if (int.TryParse(value, out int q))
+                                    {
+                                        q = Math.Clamp(q, 10, 100);
+                                        currentQuality = q;
+
+                                        AppSettingsService.Current.ScreenQuality = q;
+                                        AppSettingsService.Save();
+
+                                        OnStatusChanged?.Invoke($"Screen quality changed to {q}");
+                                    }
+
+                                    continue;
+                                }
+
                                 inputService.Execute(command);
                             }
                             catch
@@ -113,7 +132,7 @@ namespace RemoteMate.Services
                         }
                     }, token);
 
-                    var capture = new ScreenCaptureService();
+                    using var capture = new ScreenCaptureService();
 
                     while (_isRunning && client.Connected && !token.IsCancellationRequested)
                     {
@@ -121,14 +140,11 @@ namespace RemoteMate.Services
                         {
                             DateTime loopStart = DateTime.Now;
 
-                            long frameStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                            int quality = AppSettingsService.Current.ScreenQuality;
+                            byte[] img = capture.CaptureScreen(quality);
 
-                            byte[] img = capture.CaptureScreen(70);
-
-                            byte[] timeBytes = BitConverter.GetBytes(frameStartTime);
                             byte[] lenBytes = BitConverter.GetBytes(img.Length);
 
-                            await stream.WriteAsync(timeBytes.AsMemory(0, 8), token);
                             await stream.WriteAsync(lenBytes.AsMemory(0, 4), token);
                             await stream.WriteAsync(img.AsMemory(0, img.Length), token);
 

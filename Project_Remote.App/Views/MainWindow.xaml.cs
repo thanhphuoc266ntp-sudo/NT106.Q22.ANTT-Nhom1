@@ -37,6 +37,7 @@ namespace RemoteMate
         private ControlRequest _currentReceiverRequest;
         private AudioServerService _audioServerService;
         private AudioClientService _audioClientService;
+        private bool _audioEnabled = true;
         private WindowStyle _normalWindowStyle;
         private ResizeMode _normalResizeMode;
         private WindowState _normalWindowState;
@@ -55,6 +56,7 @@ namespace RemoteMate
         private ClipboardSyncService _clipboardSyncService;
         private bool _clipboardSyncEnabled = true;
         private bool _clipboardSessionActive = false;
+        private string _clipboardRemoteIp = string.Empty;
 
         public MainWindow()
         {
@@ -62,11 +64,18 @@ namespace RemoteMate
             LoadUserInfo();
             UserSession.InitNetworkInfo();
 
+            AppSettingsService.Load();
+            _audioEnabled = AppSettingsService.Current.AudioEnabled;
+            _clipboardSyncEnabled = AppSettingsService.Current.ClipboardSyncEnabled;
+
             StartServer();
             StartChatServer();
             StartNetworkDiscovery();
             StartPerformanceMonitor();
-            StartAudioServer();
+
+            if (_audioEnabled)
+                StartAudioServer();
+
             StartClipboardServer();
             InitClipboardSync();
 
@@ -181,6 +190,116 @@ namespace RemoteMate
             }
         }
 
+        public bool AudioEnabled
+        {
+            get => _audioEnabled;
+            set
+            {
+                _audioEnabled = value;
+                AppSettingsService.Current.AudioEnabled = value;
+                AppSettingsService.Save();
+
+                if (!_audioEnabled)
+                {
+                    try { _audioClientService?.Disconnect(); } catch { }
+                    try { _audioServerService?.Stop(); } catch { }
+                }
+                else
+                {
+                    StartAudioServer();
+
+                    if (btnControlMode.IsChecked == true && !string.IsNullOrWhiteSpace(_remoteIp))
+                        _ = StartRemoteAudioAsync();
+                }
+            }
+        }
+
+        public bool ClipboardSyncEnabled
+        {
+            get => _clipboardSyncEnabled;
+            set
+            {
+                _clipboardSyncEnabled = value;
+                AppSettingsService.Current.ClipboardSyncEnabled = value;
+                AppSettingsService.Save();
+
+                if (!_clipboardSyncEnabled)
+                {
+                    StopClipboardSession();
+                }
+                else
+                {
+                    string ip = GetCurrentClipboardRemoteIp();
+
+                    if (!string.IsNullOrWhiteSpace(ip))
+                        _ = StartClipboardSessionAsync(ip);
+                }
+            }
+        }
+
+        private string GetCurrentClipboardRemoteIp()
+        {
+            if (!string.IsNullOrWhiteSpace(_clipboardRemoteIp))
+                return _clipboardRemoteIp;
+
+            if (btnControlMode.IsChecked == true && !string.IsNullOrWhiteSpace(_remoteIp))
+                return _remoteIp;
+
+            if (_currentReceiverRequest != null &&
+                !string.IsNullOrWhiteSpace(_currentReceiverRequest.FromIp))
+                return _currentReceiverRequest.FromIp;
+
+            return string.Empty;
+        }
+
+        public void RefreshUserInfoFromSettings()
+        {
+            LoadUserInfo();
+        }
+
+        public void LogoutFromSettings()
+        {
+            BtnLogout_Click(this, new RoutedEventArgs());
+        }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Bạn có chắc muốn đăng xuất?",
+                "Đăng xuất",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                StopClipboardSession();
+                _clipboardServerService?.Stop();
+
+                _clipboardRemoteIp = string.Empty;
+
+                _audioClientService?.Disconnect();
+                _audioServerService?.Stop();
+
+                _clientService?.Disconnect();
+                _serverService?.Stop();
+                _chatServerService?.Stop();
+                _networkService?.Stop();
+
+                UserSession.Clear();
+
+                var loginWindow = new LoginWindow();
+                loginWindow.Show();
+                this.Close();
+            }
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsWindow settings = new SettingsWindow();
+            settings.Owner = this;
+            settings.ShowDialog();
+        }
+
         private void StartClipboardServer()
         {
             try
@@ -225,7 +344,7 @@ namespace RemoteMate
                 if (!_clipboardSyncEnabled || !_clipboardSessionActive)
                     return;
 
-                _ = _clipboardClientService?.SendTextAsync(text);
+                _ = SendClipboardTextWithRetryAsync(text);
             };
 
             _clipboardSyncService.OnLocalImageChanged += (pngData) =>
@@ -233,7 +352,7 @@ namespace RemoteMate
                 if (!_clipboardSyncEnabled || !_clipboardSessionActive)
                     return;
 
-                _ = _clipboardClientService?.SendImageAsync(pngData);
+                _ = SendClipboardImageWithRetryAsync(pngData);
             };
         }
 
@@ -247,16 +366,94 @@ namespace RemoteMate
                 if (string.IsNullOrWhiteSpace(remoteIp))
                     return;
 
+                _clipboardRemoteIp = remoteIp;
                 _clipboardSessionActive = true;
+
+                _clipboardSyncService?.Start();
 
                 _clipboardClientService?.Disconnect();
                 _clipboardClientService = new ClipboardClientService();
 
-                bool ok = await _clipboardClientService.ConnectAsync(remoteIp);
+                await _clipboardClientService.ConnectAsync(remoteIp);
+            }
+            catch
+            {
+            }
+        }
 
-                if (ok)
+        private async Task<bool> EnsureClipboardConnectedAsync()
+        {
+            try
+            {
+                if (!_clipboardSyncEnabled || !_clipboardSessionActive)
+                    return false;
+
+                if (string.IsNullOrWhiteSpace(_clipboardRemoteIp))
+                    return false;
+
+                if (_clipboardClientService != null && _clipboardClientService.IsConnected)
+                    return true;
+
+                _clipboardClientService?.Disconnect();
+                _clipboardClientService = new ClipboardClientService();
+
+                return await _clipboardClientService.ConnectAsync(_clipboardRemoteIp);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task SendClipboardTextWithRetryAsync(string text)
+        {
+            try
+            {
+                bool ok = await EnsureClipboardConnectedAsync();
+
+                if (!ok || _clipboardClientService == null)
+                    return;
+
+                ok = await _clipboardClientService.SendTextAsync(text);
+
+                if (!ok)
                 {
-                    _clipboardSyncService?.Start();
+                    _clipboardClientService.Disconnect();
+
+                    await Task.Delay(300);
+
+                    ok = await EnsureClipboardConnectedAsync();
+
+                    if (ok && _clipboardClientService != null)
+                        await _clipboardClientService.SendTextAsync(text);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private async Task SendClipboardImageWithRetryAsync(byte[] pngData)
+        {
+            try
+            {
+                bool ok = await EnsureClipboardConnectedAsync();
+
+                if (!ok || _clipboardClientService == null)
+                    return;
+
+                ok = await _clipboardClientService.SendImageAsync(pngData);
+
+                if (!ok)
+                {
+                    _clipboardClientService.Disconnect();
+
+                    await Task.Delay(300);
+
+                    ok = await EnsureClipboardConnectedAsync();
+
+                    if (ok && _clipboardClientService != null)
+                        await _clipboardClientService.SendImageAsync(pngData);
                 }
             }
             catch
@@ -272,23 +469,55 @@ namespace RemoteMate
             try { _clipboardClientService?.Disconnect(); } catch { }
         }
 
-        private async Task StartRemoteAudioAsync()
+        public async Task SendRemoteScreenQualityAsync(int quality)
         {
             try
             {
+                if (_clientService == null)
+                    return;
+
+                if (btnControlMode.IsChecked != true)
+                    return;
+
                 if (string.IsNullOrWhiteSpace(_remoteIp))
                     return;
 
-                _audioClientService?.Disconnect();
-                StopClipboardSession();
-
-                _audioClientService = new AudioClientService();
-
-                await _audioClientService.ConnectAsync(_remoteIp);
+                await _clientService.SendQualityAsync(quality);
             }
             catch
             {
+            }
+        }
 
+        private async Task StartRemoteAudioAsync()
+        {
+            if (!_audioEnabled)
+                return;
+
+            if (string.IsNullOrWhiteSpace(_remoteIp))
+                return;
+
+            _audioClientService?.Disconnect();
+
+            for (int i = 1; i <= 3; i++)
+            {
+                try
+                {
+                    _audioClientService = new AudioClientService();
+
+                    bool ok = await _audioClientService.ConnectAsync(_remoteIp);
+
+                    if (ok)
+                        return;
+
+                    _audioClientService.Disconnect();
+
+                    await Task.Delay(700);
+                }
+                catch
+                {
+                    await Task.Delay(700);
+                }
             }
         }
         private void LoadUserInfo()
@@ -550,6 +779,7 @@ namespace RemoteMate
             _serverService.OnSessionEnded += (req) =>
             {
                 StopClipboardSession();
+                _clipboardRemoteIp = string.Empty;
 
                 _ = SaveReceiverSessionAsync(
                     req,
@@ -600,67 +830,6 @@ namespace RemoteMate
             };
 
             _networkService.StartDiscovery();
-        }
-
-        private void profileDot_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
-            {
-                ContextMenu contextMenu = new ContextMenu();
-
-                MenuItem profileItem = new MenuItem { Header = "Hồ sơ" };
-                profileItem.Click += MenuProfile_Click;
-
-                MenuItem changePwdItem = new MenuItem { Header = "Đổi mật khẩu" };
-                changePwdItem.Click += MenuChangePassword_Click;
-
-                contextMenu.Items.Add(profileItem);
-                contextMenu.Items.Add(changePwdItem);
-
-                contextMenu.PlacementTarget = sender as UIElement;
-                contextMenu.IsOpen = true;
-            }
-        }
-
-        private void MenuProfile_Click(object sender, RoutedEventArgs e)
-        {
-            ProfileWindow profile = new ProfileWindow();
-            profile.ShowDialog();
-            LoadUserInfo();
-        }
-
-        private void MenuChangePassword_Click(object sender, RoutedEventArgs e)
-        {
-            ChangePasswordWindow changePwd = new ChangePasswordWindow();
-            changePwd.ShowDialog();
-        }
-
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
-        {
-            var result = MessageBox.Show(
-                "Bạn có chắc muốn đăng xuất?",
-                "Đăng xuất",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                _clipboardServerService?.Stop();
-
-                _audioClientService?.Disconnect();
-                _audioServerService?.Stop();
-
-                _clientService?.Disconnect();
-                _serverService?.Stop();
-                _chatServerService?.Stop();
-                _networkService?.Stop();
-
-                UserSession.Clear();
-
-                var loginWindow = new LoginWindow();
-                loginWindow.Show();
-                this.Close();
-            }
         }
 
         private void borderScreenArea_MouseEnter(object sender, MouseEventArgs e)
@@ -823,10 +992,11 @@ namespace RemoteMate
 
             _clientService = new TcpClientService();
 
-            _clientService.OnScreenReceived += (imageData, frameStartTime) =>
+            _clientService.OnScreenReceived += (imageData, frameReceiveDelayMs) =>
             {
                 System.Threading.Interlocked.Increment(ref _receivedFrameCount);
-                System.Threading.Interlocked.Increment(ref _receivedFrameCount);
+
+                System.Diagnostics.Stopwatch uiSw = System.Diagnostics.Stopwatch.StartNew();
 
                 Dispatcher.Invoke(() =>
                 {
@@ -844,10 +1014,16 @@ namespace RemoteMate
                             imgRemoteScreen.Stretch = System.Windows.Media.Stretch.Uniform;
                             imgRemoteScreen.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
                             imgRemoteScreen.VerticalAlignment = System.Windows.VerticalAlignment.Stretch;
-                            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                            long frameDelay = Math.Max(0, now - frameStartTime);
-                            txtLatency.Text = $"{frameDelay} ms";
+
+                            uiSw.Stop();
+
+                            double totalFrameDelayMs = frameReceiveDelayMs + uiSw.Elapsed.TotalMilliseconds;
+
+                            txtLatency.Text = totalFrameDelayMs < 0.1
+                                ? "<0.1 ms"
+                                : $"{totalFrameDelayMs:F1} ms";
                         }
+
                         imgRemoteScreen.Visibility = Visibility.Visible;
                         pnlPlaceholder.Visibility = Visibility.Collapsed;
                     }
@@ -871,6 +1047,9 @@ namespace RemoteMate
             _clientService.OnDisconnected += () =>
             {
                 _audioClientService?.Disconnect();
+                StopClipboardSession();
+                _clipboardRemoteIp = string.Empty;
+
                 _ = SaveControllerSessionAsync("Completed", "Người dùng ngắt kết nối");
 
                 Dispatcher.Invoke(() =>
@@ -892,6 +1071,8 @@ namespace RemoteMate
             if (connected)
             {
                 _currentControllerSessionStart = DateTime.Now;
+
+                await SendRemoteScreenQualityAsync(AppSettingsService.Current.ScreenQuality);
 
                 await StartRemoteAudioAsync();
                 await StartClipboardSessionAsync(_remoteIp);
@@ -966,15 +1147,12 @@ namespace RemoteMate
                     return;
                 }
 
-                string downloadsFolder = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    "Downloads"
-                );
+                string saveFolder = AppSettingsService.GetScreenshotFolder();
 
-                Directory.CreateDirectory(downloadsFolder);
+                Directory.CreateDirectory(saveFolder);
 
                 string fileName = $"RemoteMate_Screenshot_{DateTime.Now:yyyyMMdd_HHmmssfff}.png";
-                string filePath = Path.Combine(downloadsFolder, fileName);
+                string filePath = Path.Combine(saveFolder, fileName);
 
                 PngBitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -1001,8 +1179,7 @@ namespace RemoteMate
                 );
             }
         }
-        private void BtnLockScreen_Click(object sender, RoutedEventArgs e) { }
-        private void BtnShutdown_Click(object sender, RoutedEventArgs e) { }
+
         private bool IsRemoteInputReady()
         {
             return _clientService != null &&

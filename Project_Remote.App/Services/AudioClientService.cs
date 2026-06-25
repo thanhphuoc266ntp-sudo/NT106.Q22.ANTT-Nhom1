@@ -41,11 +41,16 @@ namespace RemoteMate.Services
 
                 _bufferedWaveProvider = new BufferedWaveProvider(waveFormat)
                 {
-                    BufferDuration = TimeSpan.FromSeconds(2),
+                    BufferDuration = TimeSpan.FromMilliseconds(300),
                     DiscardOnBufferOverflow = true
                 };
 
-                _waveOut = new WaveOutEvent();
+                _waveOut = new WaveOutEvent
+                {
+                    DesiredLatency = 100,
+                    NumberOfBuffers = 2
+                };
+
                 _waveOut.Init(_bufferedWaveProvider);
                 _waveOut.Play();
 
@@ -88,7 +93,13 @@ namespace RemoteMate.Services
                     if (!ok)
                         break;
 
-                    _bufferedWaveProvider?.AddSamples(audioBuffer, 0, size);
+                    if (_bufferedWaveProvider != null)
+                    {
+                        if (_bufferedWaveProvider.BufferedDuration.TotalMilliseconds > 700)
+                            _bufferedWaveProvider.ClearBuffer();
+
+                        _bufferedWaveProvider.AddSamples(audioBuffer, 0, size);
+                    }
                 }
             }
             catch

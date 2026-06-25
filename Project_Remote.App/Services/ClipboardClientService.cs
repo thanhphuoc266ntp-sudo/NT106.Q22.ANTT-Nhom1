@@ -14,6 +14,21 @@ namespace RemoteMate.Services
         private StreamWriter? _writer;
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
+        public bool IsConnected
+        {
+            get
+            {
+                try
+                {
+                    return _client != null && _client.Connected && _writer != null;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
         public async Task<bool> ConnectAsync(string remoteIp)
         {
             try

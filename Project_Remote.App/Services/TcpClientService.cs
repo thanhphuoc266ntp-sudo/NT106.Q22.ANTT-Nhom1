@@ -1,6 +1,8 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
+using System.Diagnostics;
 
 namespace RemoteMate.Services
 {
@@ -13,7 +15,7 @@ namespace RemoteMate.Services
 
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-        public event Action<byte[], long> OnScreenReceived;
+        public event Action<byte[], double> OnScreenReceived;
         public event Action<string> OnStatusChanged;
         public event Action OnDisconnected;
 
@@ -83,13 +85,23 @@ namespace RemoteMate.Services
 
         private async Task<bool> ReadExact(byte[] buffer, int size)
         {
+            return await ReadExact(buffer, 0, size);
+        }
+
+        private async Task<bool> ReadExact(byte[] buffer, int offset, int size)
+        {
             int total = 0;
+
             while (total < size)
             {
-                int read = await _stream.ReadAsync(buffer, total, size - total);
-                if (read == 0) return false;
+                int read = await _stream.ReadAsync(buffer, offset + total, size - total);
+
+                if (read == 0)
+                    return false;
+
                 total += read;
             }
+
             return true;
         }
 
@@ -99,15 +111,17 @@ namespace RemoteMate.Services
             {
                 while (_isConnected && _client.Connected)
                 {
-                    byte[] timeBuf = new byte[8];
-                    bool ok = await ReadExact(timeBuf, 8);
-                    if (!ok) break;
-
-                    long frameStartTime = BitConverter.ToInt64(timeBuf, 0);
-
                     byte[] lenBuf = new byte[4];
-                    ok = await ReadExact(lenBuf, 4);
-                    if (!ok) break;
+
+                    bool ok = await ReadExact(lenBuf, 0, 1);
+                    if (!ok)
+                        break;
+
+                    Stopwatch sw = Stopwatch.StartNew();
+
+                    ok = await ReadExact(lenBuf, 1, 3);
+                    if (!ok)
+                        break;
 
                     int size = BitConverter.ToInt32(lenBuf, 0);
 
@@ -115,10 +129,16 @@ namespace RemoteMate.Services
                         break;
 
                     byte[] img = new byte[size];
-                    ok = await ReadExact(img, size);
-                    if (!ok) break;
 
-                    OnScreenReceived?.Invoke(img, frameStartTime);
+                    ok = await ReadExact(img, 0, size);
+                    if (!ok)
+                        break;
+
+                    sw.Stop();
+
+                    double frameReceiveDelayMs = sw.Elapsed.TotalMilliseconds;
+
+                    OnScreenReceived?.Invoke(img, frameReceiveDelayMs);
                 }
             }
             catch { }
@@ -152,6 +172,11 @@ namespace RemoteMate.Services
             }
         }
 
+        public Task SendQualityAsync(int quality)
+        {
+            int q = Math.Clamp(quality, 10, 100);
+            return SendInputAsync($"SET_QUALITY|{q}");
+        }
         public Task SendMouseMoveAsync(int x, int y)
         {
             return SendInputAsync($"INPUT|MOVE|{x}|{y}");

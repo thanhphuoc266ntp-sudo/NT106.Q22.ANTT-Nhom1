@@ -117,10 +117,7 @@ namespace RemoteMate.Services
 
             fileName = Path.GetFileName(fileName);
 
-            string saveFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Downloads"
-            );
+            string saveFolder = AppSettingsService.GetReceivedFileFolder();
 
             Directory.CreateDirectory(saveFolder);
 

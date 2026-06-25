@@ -1,0 +1,200 @@
+﻿<Window x:Class="RemoteMate.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cài đặt"
+        Height="500"
+        Width="360"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Loaded="Window_Loaded"
+        Background="#0b132b">
+
+    <Window.Resources>
+
+        <Style x:Key="SettingTextButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="28"/>
+        </Style>
+
+        <Style x:Key="LogoutTextButton" TargetType="Button" BasedOn="{StaticResource SettingTextButton}">
+            <Setter Property="Foreground" Value="#ff5c5c"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="MobileSwitchStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="track"
+                                Width="42"
+                                Height="24"
+                                CornerRadius="12"
+                                Background="#00b894">
+                            <Ellipse x:Name="knob"
+                                     Width="18"
+                                     Height="18"
+                                     Fill="White"
+                                     HorizontalAlignment="Right"
+                                     Margin="3"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="track" Property="Background" Value="#64748b"/>
+                                <Setter TargetName="knob" Property="HorizontalAlignment" Value="Left"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Background="#0b132b">
+        <Border Margin="16"
+                CornerRadius="12"
+                Background="#1c2b45"
+                BorderBrush="#2f3f63"
+                BorderThickness="1"
+                Padding="20">
+
+            <DockPanel LastChildFill="True">
+
+                <TextBlock DockPanel.Dock="Top"
+                           Text="⚙ CÀI ĐẶT"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="#38bdf8"
+                           Margin="0,0,0,18"/>
+
+                <StackPanel DockPanel.Dock="Bottom"
+                            Margin="0,8,0,0">
+                    <Separator Margin="0,0,0,12"
+                               Background="#607089"/>
+
+                    <Button Content="⎋ Đăng xuất"
+                            Style="{StaticResource LogoutTextButton}"
+                            Click="BtnLogout_Click"
+                            Height="28"/>
+                </StackPanel>
+
+                <StackPanel>
+
+                    <Button Content="Hồ sơ"
+                            Style="{StaticResource SettingTextButton}"
+                            Click="BtnProfile_Click"
+                            Margin="0,0,0,10"/>
+
+                    <Button Content="Đổi mật khẩu"
+                            Style="{StaticResource SettingTextButton}"
+                            Click="BtnChangePassword_Click"
+                            Margin="0,0,0,14"/>
+
+                    <Separator Margin="0,0,0,14"
+                               Background="#607089"/>
+
+                    <Button Content="Thư mục nhận tệp"
+                            Style="{StaticResource SettingTextButton}"
+                            Click="BtnReceivedFolder_Click"
+                            Margin="0,0,0,10"/>
+
+                    <Button Content="Thư mục lưu ảnh chụp"
+                            Style="{StaticResource SettingTextButton}"
+                            Click="BtnScreenshotFolder_Click"
+                            Margin="0,0,0,10"/>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="76"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Chất lượng truyền màn hình"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+
+                        <ComboBox Name="cmbQuality"
+                                  Grid.Column="1"
+                                  Height="26"
+                                  SelectedIndex="5"
+                                  SelectionChanged="cmbQuality_SelectionChanged"
+                                  FontSize="12"
+                                  Foreground="#111827"
+                                  Background="White"
+                                  MaxDropDownHeight="160"
+                                  VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="10" Foreground="#111827"/>
+                            <ComboBoxItem Content="20" Foreground="#111827"/>
+                            <ComboBoxItem Content="30" Foreground="#111827"/>
+                            <ComboBoxItem Content="40" Foreground="#111827"/>
+                            <ComboBoxItem Content="50" Foreground="#111827"/>
+                            <ComboBoxItem Content="60" Foreground="#111827"/>
+                            <ComboBoxItem Content="70" Foreground="#111827"/>
+                            <ComboBoxItem Content="80" Foreground="#111827"/>
+                            <ComboBoxItem Content="90" Foreground="#111827"/>
+                            <ComboBoxItem Content="100" Foreground="#111827"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <Separator Margin="0,0,0,14"
+                               Background="#607089"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Âm thanh từ xa"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+
+                        <ToggleButton Name="tglAudio"
+                                      Grid.Column="1"
+                                      Style="{StaticResource MobileSwitchStyle}"
+                                      Checked="ToggleAudio_Changed"
+                                      Unchecked="ToggleAudio_Changed"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Đồng bộ Clipboard"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+
+                        <ToggleButton Name="tglClipboard"
+                                      Grid.Column="1"
+                                      Style="{StaticResource MobileSwitchStyle}"
+                                      Checked="ToggleClipboard_Changed"
+                                      Unchecked="ToggleClipboard_Changed"/>
+                    </Grid>
+
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

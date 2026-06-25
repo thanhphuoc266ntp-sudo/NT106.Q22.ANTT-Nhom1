@@ -39,8 +39,7 @@
                         </Grid.RowDefinitions>
 
                         <Ellipse Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" 
-                 Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,10,0" 
-                 Cursor="Hand" MouseDown="profileDot_MouseDown">
+                                Width="32" Height="32" VerticalAlignment="Center" Margin="0,0,10,0">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="/Images/avatar.jpg" Stretch="UniformToFill"/>
                             </Ellipse.Fill>
@@ -50,10 +49,13 @@
                    Text="" Foreground="White" FontWeight="SemiBold" FontSize="15" 
                    VerticalAlignment="Center"/>
 
-                        <Button Name="btnLogout" Grid.Row="0" Grid.Column="2" 
-                            Content="🚪 Đăng xuất" VerticalAlignment="Center" 
-                            Background="Transparent" Foreground="#e74c3c" BorderThickness="0" 
-                            FontSize="13" Cursor="Hand" Click="BtnLogout_Click"/>
+                        <Button Name="btnSettings" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center"
+                                  Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnSettings_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚙" Foreground="#34e7e4" FontSize="14" FontWeight="Bold" Margin="0,0,4,0"/>
+                                <TextBlock Text="Cài đặt" Foreground="#34e7e4" FontSize="13" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Button>
 
                         <TextBlock x:Name="txtProfileEmail" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                            Text="" Foreground="#95a5a6" FontSize="13" Margin="0,2,0,0"
@@ -127,12 +129,10 @@
             </Border>
 
             <Border Grid.Row="1" Margin="20,10,20,0" Padding="10" Background="White" CornerRadius="12">
-                <UniformGrid Columns="5">
+                <UniformGrid Columns="3">
                     <ToggleButton Name="btnControlMode" Content="🎮 ĐIỀU KHIỂN" Height="45" Margin="5" Background="#4834d4" Foreground="White" FontWeight="Bold" Checked="BtnControlMode_Checked" Unchecked="BtnControlMode_Unchecked"/>
                     <Button Name="btnFileTransfer" Content="💬 CHAT" Height="45" Margin="5" Background="#00b894" Foreground="White" FontWeight="Bold" Click="BtnFileTransfer_Click"/>
                     <Button Name="btnScreenshot" Content="📸 CHỤP ẢNH" Height="45" Margin="5" Background="#2d3436" Foreground="White" FontWeight="Bold" Click="BtnScreenshot_Click"/>
-                    <Button Name="btnLockScreen" Content="🔒 KHÓA MÁY" Height="45" Margin="5" Background="#e67e22" Foreground="White" FontWeight="Bold" Click="BtnLockScreen_Click"/>
-                    <Button Name="btnShutdown" Content="⛔ TẮT MÁY" Height="45" Margin="5" Background="#eb4d4b" Foreground="White" FontWeight="Bold" Click="BtnShutdown_Click"/>
                 </UniformGrid>
             </Border>
 
@@ -200,7 +200,7 @@
                             PreviewMouseLeftButtonDown="btnMaximize_PreviewMouseLeftButtonDown"
                             PreviewMouseMove="btnMaximize_PreviewMouseMove"
                             PreviewMouseLeftButtonUp="btnMaximize_PreviewMouseLeftButtonUp"
-                            ToolTip="Phóng to / Thu nhỏ màn hình">          
+                            ToolTip="Phóng to / Thu nhỏ màn hình">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="border"
